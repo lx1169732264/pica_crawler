@@ -20,10 +20,10 @@ python main.py
 
 # secret-config.ini
 
-运行前填写完这里的所有配置项
-[email][password]是pica的账号密码
-[proxy_soft_ware]是代理程序的路径,允许时会帮你自动启动代理程序,并支持在下载完毕后自动关闭代理
-[secret_key可以按AnkiKong的这篇文章进行配置](https://zhuanlan.zhihu.com/p/547321040)
+运行前填写完这里的所有配置项   
+[email][password]是pica的账号密码   
+[proxy_soft_ware]是代理程序的路径,允许时会帮你自动启动代理程序,并支持在下载完毕后自动关闭代理   
+[secret_key可以按AnkiKong的这篇文章进行配置](https://zhuanlan.zhihu.com/p/547321040)   
 
 # main.py
 
