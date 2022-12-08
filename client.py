@@ -1,14 +1,14 @@
 import hashlib
 import hmac
 import json
-import os
+from configparser import ConfigParser
 from time import time
 from urllib.parse import urlencode
 
 import requests
 import urllib3
 
-from util import get_header, get_secret_cfg, convert_file_name
+from util import get_secret_cfg
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -26,7 +26,9 @@ class Pica:
         self.__s = requests.session()
         self.__s.proxies = {"https": get_secret_cfg("https_proxy"), "http": get_secret_cfg("http_proxy")}
         self.__s.verify = False
-        self.headers = get_header()
+        parser = ConfigParser()
+        parser.read('./config.ini', encoding='utf-8')
+        self.headers = dict(parser.items('header'))
 
     def http_do(self, method, url, **kwargs):
         kwargs.setdefault("allow_redirects", True)
@@ -59,25 +61,29 @@ class Pica:
             args.append(("page", str(page)))
         params = urlencode(args)
         url = f"{base}comics?{params}"
-        res = self.http_do("GET", url).json()
-        return res
+        return self.http_do("GET", url).json()
 
+    #排行榜
     def leaderboard(self) -> list:
+        #tt的可选值: H24, D7, D30   分别代表每天/周/月
         args = [("tt", 'H24'), ("ct", 'VC')]
         params = urlencode(args)
         url = f"{base}comics/leaderboard?{params}"
         res = self.http_do("GET", url)
         return json.loads(res.content.decode())["data"]["comics"]
 
+    #获取本子详细信息
     def comic_info(self, book_id):
         url = f"{base}comics/{book_id}"
         res = self.http_do("GET", url=url)
         return json.loads(res.content.decode())
 
+    #获取本子的章节
     def episodes(self, book_id, page=1):
         url = f"{base}comics/{book_id}/eps?page={page}"
         return self.http_do("GET", url=url)
 
+    #根据章节获取图片
     def picture(self, book_id, ep_id, page=1):
         url = f"{base}comics/{book_id}/order/{ep_id}/pages?page={page}"
         return self.http_do("GET", url=url)
@@ -86,24 +92,24 @@ class Pica:
         url = f"{base}comics/advanced-search?page={page}"
         return self.http_do("POST", url=url, json={"keyword": keyword, "sort": sort})
 
-    def download(self, name: str, i: int, url: str):
-        path = get_secret_cfg('save_path') + convert_file_name(name) + '\\' + str(i + 1).zfill(4) + '.jpg'
-        if os.path.exists(path):
-            return
-
-        f = open(path, 'wb')
-        f.write(self.http_do("GET", url=url).content)
-        f.close()
-
     def categories(self):
         url = f"{base}categories"
         return self.http_do("GET", url=url)
 
+    #收藏/取消收藏本子
     def favourite(self, book_id):
         url = f"{base}comics/{book_id}/favourite"
         return self.http_do("POST", url=url)
 
+    #获取收藏夹
     def my_favourite(self):
         url = f"{base}users/favourite"
         res = self.http_do("GET", url=url)
         return json.loads(res.content.decode())["data"]["comics"]["docs"]
+
+    #打卡
+    def punch_in(self):
+        url = f"{base}/users/punch-in"
+        res = self.http_do("POST", url=url)
+        return json.loads(res.content.decode())
+

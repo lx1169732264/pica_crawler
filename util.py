@@ -1,22 +1,13 @@
 import os
-import winreg
 from configparser import ConfigParser
 
 
-# windows的文件夹不能带特殊字符,需要处理下文件夹名
 def convert_file_name(name: str) -> str:
+    # windows的文件夹不能带特殊字符,需要处理下文件夹名
     for i, j in ("/／", "\\＼", "?？", "|︱", "\"＂", "*＊", "<＜", ">＞", ":-"):
         name = name.replace(i, j)
-    name = name.replace("[中国翻訳]", "")
-    name = name.replace("[DL版]", "")
     name = name.replace(" ", "")
     return name
-
-
-def get_header():
-    parser = ConfigParser()
-    parser.read('./config.ini', encoding='utf-8')
-    return dict(parser.items('header'))
 
 
 def get_cfg(section: str, key: str):
@@ -31,55 +22,32 @@ def get_secret_cfg(key: str):
     return dict(parser.items('system'))[key]
 
 
-def filter_by_added(comics: list) -> list:
-    f = open('downloaded.txt', 'r')
-    ids = f.read().split('\n')
-    return [i for i in comics if i['_id'] not in ids]
-
-
-def save_comic_id(id: int):
-    f = open('downloaded.txt', 'ab')
-    f.write((str(id) + '\n').encode())
-    f.close()
-
-
-def save_comic_ids(ids: list):
-    f = open('downloaded.txt', 'ab')
-    if ids:
-        f.write(('\n'.join(ids)).encode())
-    f.close()
-
-
-# 过滤掉指定分区的本子
-def filter_by_categorie(comics: list) -> list:
-    categories = get_cfg('filter', 'categories').split(',')
-    return [i for i in comics if len(set(i['categories']).intersection(set(categories))) == 0]
-
-
 def filter_comics(comics) -> list:
-    res = filter_by_added(comics)
-    res = filter_by_categorie(res)
+    # 过滤掉已下载的本子
+    ids = open('downloaded.txt', 'r').read().split('\n')
+    res = [i for i in comics if i['_id'] not in ids]
+
+    # 过滤掉指定分区的本子
+    categories = get_cfg('filter', 'categories').split(',')
+    if categories:
+        res = [i for i in comics if len(set(i['categories']).intersection(set(categories))) == 0]
+
     for c in comics:
         if c not in res:
             print('%s:%s:skip,filtered---------------' % (c['title'], c['_id']))
     return res
 
 
-def doc_to_pic_url(i):
-    return i['media']['fileServer'] + '/static/' + i['media']['path']
-
-
 def list_partition(ls, size):
     return [ls[i:i + size] for i in range(0, len(ls), size)]
 
 
-def process_exit():
-    str = "taskkill /F /IM " + get_secret_cfg('proxy_soft_ware')
-    os.system(str)
+def download(self, name: str, i: int, url: str):
+    path = get_secret_cfg('save_path') + convert_file_name(name) + '\\' + str(i + 1).zfill(4) + '.jpg'
+    if os.path.exists(path):
+        return
 
-    # 如果从来没有开过代理 有可能健不存在 会报错
-    INTERNET_SETTINGS = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                                       r'Software\Microsoft\Windows\CurrentVersion\Internet Settings',
-                                       0, winreg.KEY_ALL_ACCESS)
-    _, reg_type = winreg.QueryValueEx(INTERNET_SETTINGS, 'ProxyEnable')
-    winreg.SetValueEx(INTERNET_SETTINGS, 'ProxyEnable', 0, reg_type, 0)
+    f = open(path, 'wb')
+    f.write(self.http_do("GET", url=url).content)
+    f.close()
+

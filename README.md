@@ -82,7 +82,16 @@ python main.py
 <img src="https://img0.baidu.com/it/u=3062059221,3960853354&fm=253&fmt=auto&app=138&f=JPEG?w=198&h=198" align=center />
 
 
+# CHANGELOG
 
+v1.1    2022/12/08
+---------------
+* 启动项目时自动打卡
+
+
+v1.0   2022/11/27
+---------------
+* 实现按排行榜以及收藏夹进行下载的功能
 
 
 
