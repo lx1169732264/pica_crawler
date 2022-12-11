@@ -39,7 +39,7 @@ def download_comic(comic):
     for part in pics_part:
         threads = []
         for pic in part:
-            t = threading.Thread(target=download, args=(title, pics.index(pic), pic))
+            t = threading.Thread(target=download, args=(p, title, pics.index(pic), pic))
             threads.append(t)
             t.start()
         for t in threads:
