@@ -48,7 +48,7 @@ def download_comic(comic):
         print("%s:已下载:%d,总共:%d,进度:%s%%" % (title, last, len(pics), int(last / len(pics) * 100)))
     # 记录已下载过的id
     f = open('downloaded.txt', 'ab')
-    f.write((str(id) + '\n').encode())
+    f.write((str(cid) + '\n').encode())
     f.close()
 
 

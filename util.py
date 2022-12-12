@@ -25,17 +25,13 @@ def get_secret_cfg(key: str):
 def filter_comics(comics) -> list:
     # 过滤掉已下载的本子
     ids = open('downloaded.txt', 'r').read().split('\n')
-    res = [i for i in comics if i['_id'] not in ids]
+    comics = [i for i in comics if i['_id'] not in ids]
 
     # 过滤掉指定分区的本子
     categories = get_cfg('filter', 'categories').split(',')
     if categories:
-        res = [i for i in comics if len(set(i['categories']).intersection(set(categories))) == 0]
-
-    for c in comics:
-        if c not in res:
-            print('%s:%s:skip,filtered---------------' % (c['title'], c['_id']))
-    return res
+        comics = [i for i in comics if len(set(i['categories']).intersection(set(categories))) == 0]
+    return comics
 
 
 def list_partition(ls, size):
