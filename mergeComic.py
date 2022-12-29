@@ -5,9 +5,7 @@ import shutil
 
 from pip._vendor.distlib.compat import raw_input
 
-from util import get_secret_cfg
-
-path = get_secret_cfg('merge_path')
+path = './zips/'
 if not os.path.exists(path):
     os.makedirs(path)
 
@@ -26,9 +24,9 @@ for i in range(len(dirs)):
     pics = os.listdir(path + d)
     pics.sort(key=lambda x: str(x.split('.')[0]))
 
-    source = path + d + '\\'
+    source = path + d + '/'
     for p in pics:
-        os.rename(source + p, path + target + '\\' + str(index).zfill(4) + '.jpg')
+        os.rename(source + p, path + target + '/' + str(index).zfill(4) + '.jpg')
         index += 1
     shutil.rmtree(source)
     print('merge finished,' + d + ' removed------------------------------------')

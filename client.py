@@ -1,6 +1,9 @@
 import hashlib
 import hmac
+import io
 import json
+import os
+import sys
 from configparser import ConfigParser
 from time import time
 from urllib.parse import urlencode
@@ -8,12 +11,11 @@ from urllib.parse import urlencode
 import requests
 import urllib3
 
-from util import get_secret_cfg
+sys.stdout=io.TextIOWrapper(sys.stdout.buffer,encoding='utf8')
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 base = "https://picaapi.picacomic.com/"
-
 
 class Pica:
     Order_Default = "ua"  # 默认
@@ -24,7 +26,6 @@ class Pica:
 
     def __init__(self) -> None:
         self.__s = requests.session()
-        self.__s.proxies = {"https": get_secret_cfg("https_proxy"), "http": get_secret_cfg("http_proxy")}
         self.__s.verify = False
         parser = ConfigParser()
         parser.read('./config.ini', encoding='utf-8')
@@ -35,19 +36,19 @@ class Pica:
         header = self.headers.copy()
         ts = str(int(time()))
         raw = url.replace(base, "") + str(ts) + header["nonce"] + method + header["api-key"]
-        hc = hmac.new(get_secret_cfg('secret_key').encode(), digestmod=hashlib.sha256)
+        hc = hmac.new(os.environ["PICA_SECRET_KEY"].encode(), digestmod=hashlib.sha256)
         hc.update(raw.lower().encode())
         header["signature"] = hc.hexdigest()
         header["time"] = ts
         kwargs.setdefault("headers", header)
-        return self.__s.request(method=method, url=url, verify=False, **kwargs)
+        response = self.__s.request(method=method, url=url, verify=False, **kwargs)
+        return response
 
     def login(self):
         url = base + "auth/sign-in"
-        send = {"email": get_secret_cfg('email'), "password": get_secret_cfg('password')}
+        send = {"email": os.environ.get("PICA_ACCOUNT"), "password": os.environ.get("PICA_PASSWORD")}
         __a = self.http_do("POST", url=url, json=send).text
         self.headers["authorization"] = json.loads(__a)["data"]["token"]
-        return self.headers["authorization"]
 
     def comics(self, block="", tag="", order="", page=1):
         args = []
@@ -70,7 +71,7 @@ class Pica:
         params = urlencode(args)
         url = f"{base}comics/leaderboard?{params}"
         res = self.http_do("GET", url)
-        return json.loads(res.content.decode())["data"]["comics"]
+        return json.loads(res.content.decode("utf-8"))["data"]["comics"]
 
     #获取本子详细信息
     def comic_info(self, book_id):

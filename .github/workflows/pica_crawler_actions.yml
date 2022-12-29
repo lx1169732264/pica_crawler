@@ -1,0 +1,43 @@
+name: pica_crawler
+
+on:
+  schedule:
+    - cron: "* * 1 * *"
+  push:
+    branches:
+      - "master"
+  workflow_dispatch:
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: install dependency
+        run: |
+          pip install urllib3
+          pip install requests
+      - name: main logic
+        env:
+          PICA_SECRET_KEY: ${{secrets.PICA_SECRET_KEY}}
+          PICA_ACCOUNT: ${{secrets.PICA_ACCOUNT}}
+          PICA_PASSWORD: ${{secrets.PICA_PASSWORD}}
+          EMAIL_ACCOUNT: ${{secrets.EMAIL_ACCOUNT}}
+          EMAIL_AUTH_CODE: ${{secrets.EMAIL_AUTH_CODE}}
+          EMAIL_SERVER_HOST: smtp.sina.com
+          CATEGORIES: CG雜圖,生肉,耽美花園,偽娘哲學,扶他樂園,性轉換,SAO 刀劍神域,WEBTOON,Cosplay
+        run: python main.py
+      - name: 推送
+        uses: actions-go/push@master
+        with:
+          author-email: '1169732264@qq.com'
+          author-name: 'lx'
+          commit-message: 'update downloaded comics'
+          remote: origin
+          token: ${{ secrets.GIT_TOKEN }}

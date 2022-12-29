@@ -1,9 +1,10 @@
 import json
+import shutil
+import smtplib
 import threading
-import time
-import winreg
-
-import win32api
+from email.header import Header
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from client import Pica
 from util import *
@@ -12,7 +13,7 @@ from util import *
 def download_comic(comic):
     cid = comic["_id"]
     title = comic["title"]
-    print('第%d本:%s:%s:downloading---------------------' % (index, title, cid))
+    print('%s:downloading---------------------' % (cid))
     res = []
     episodes = list(p.episodes(cid).json()["data"]["eps"]["docs"])
     episodes.reverse()
@@ -29,10 +30,9 @@ def download_comic(comic):
 
     # todo pica服务器抽风了,没返回图片回来,有知道原因的大佬麻烦联系下我
     if not pics:
-        print('第%d本:%s:%s:failed,图片数量为0---------------------' % (index, title, cid))
         return
 
-    path = get_secret_cfg('save_path') + convert_file_name(title) + '\\'
+    path = './comics/' + convert_file_name(title) + '/'
     if not os.path.exists(path):
         os.makedirs(path)
     pics_part = list_partition(pics, int(get_cfg('crawl', 'concurrency')))
@@ -45,16 +45,12 @@ def download_comic(comic):
         for t in threads:
             t.join()
         last = pics.index(part[-1]) + 1
-        print("%s:已下载:%d,总共:%d,进度:%s%%" % (title, last, len(pics), int(last / len(pics) * 100)))
+        print("%s:downloaded:%d,total:%d,progress:%s%%" % (cid, last, len(pics), int(last / len(pics) * 100)))
     # 记录已下载过的id
-    f = open('downloaded.txt', 'ab')
+    f = open('./downloaded.txt', 'ab')
     f.write((str(cid) + '\n').encode())
     f.close()
 
-
-win32api.ShellExecute(0, 'open', get_secret_cfg('proxy_soft_ware_path'), '', '', 1)
-### 打开代理软件后需要让子弹飞一会儿,确保代理配置完毕
-time.sleep(3)
 
 p = Pica()
 p.login()
@@ -71,11 +67,27 @@ for index in range(len(comics)):
         print('download failed,' + str(index))
         continue
 
-# 关闭代理软件
-os.system("taskkill /F /IM " + get_secret_cfg('proxy_soft_ware'))
-# 清除系统的代理
-INTERNET_SETTINGS = winreg.OpenKey(winreg.HKEY_CURRENT_USER,
-                                   r'Software\Microsoft\Windows\CurrentVersion\Internet Settings',
-                                   0, winreg.KEY_ALL_ACCESS)
-_, reg_type = winreg.QueryValueEx(INTERNET_SETTINGS, 'ProxyEnable')
-winreg.SetValueEx(INTERNET_SETTINGS, 'ProxyEnable', 0, reg_type, 0)
+if not os.path.exists("./comics"):
+    os.mkdir('./comics')
+if not os.path.exists("./zips"):
+    os.mkdir('./zips')
+zip_file("./comics", "./zips")
+
+email_account = os.environ["EMAIL_ACCOUNT"]
+smtpObj = smtplib.SMTP()
+smtpObj.connect(os.environ["EMAIL_SERVER_HOST"])
+smtpObj.login(email_account, os.environ["EMAIL_AUTH_CODE"])
+
+for zipFile in os.listdir('./zips'):
+    msg = MIMEMultipart()
+    msg['From'] = Header(email_account)
+    msg['Subject'] = Header('pica comics', 'utf-8')
+    att = MIMEText(open('./zips/' + zipFile, 'rb').read(), 'base64', 'utf-8')
+    att["Content-Type"] = 'application/octet-stream'
+    att["Content-Disposition"] = 'attachment; filename="' + zipFile + '"'
+    msg.attach(att)
+    smtpObj.sendmail(email_account, email_account, msg.as_string())
+smtpObj.quit()
+
+shutil.rmtree('./zips/')
+shutil.rmtree('./comics/')
