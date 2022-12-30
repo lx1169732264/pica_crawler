@@ -2,7 +2,7 @@ name: pica_crawler
 
 on:
   schedule:
-    - cron: "* * 1 * *"
+    - cron: "0 0 1 * *"
   push:
     branches:
       - "master"
@@ -32,8 +32,10 @@ jobs:
           EMAIL_AUTH_CODE: ${{secrets.EMAIL_AUTH_CODE}}
           EMAIL_SERVER_HOST: smtp.sina.com
           CATEGORIES: CG雜圖,生肉,耽美花園,偽娘哲學,扶他樂園,性轉換,SAO 刀劍神域,WEBTOON,Cosplay
-        run: python main.py
-      - name: 推送
+        run: | 
+          python main.py
+          git add downloaded.txt
+      - name: commit & push
         uses: actions-go/push@master
         with:
           author-email: '1169732264@qq.com'
