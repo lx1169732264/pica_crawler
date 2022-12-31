@@ -48,6 +48,7 @@ class Pica:
         url = base + "auth/sign-in"
         send = {"email": os.environ.get("PICA_ACCOUNT"), "password": os.environ.get("PICA_PASSWORD")}
         __a = self.http_do("POST", url=url, json=send).text
+        print(__a)
         self.headers["authorization"] = json.loads(__a)["data"]["token"]
 
     def comics(self, block="", tag="", order="", page=1):
