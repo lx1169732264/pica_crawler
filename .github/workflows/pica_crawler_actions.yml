@@ -2,7 +2,7 @@ name: pica_crawler
 
 on:
   schedule:
-    - cron: "0 0 */12 * *"
+    - cron: "30 9 * * *"
   workflow_dispatch:
 
 jobs:
