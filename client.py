@@ -11,12 +11,9 @@ from urllib.parse import urlencode
 import requests
 import urllib3
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
-
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 base = "https://picaapi.picacomic.com/"
-
 
 class Pica:
     Order_Default = "ua"  # 默认
