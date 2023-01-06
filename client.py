@@ -11,11 +11,12 @@ from urllib.parse import urlencode
 import requests
 import urllib3
 
-sys.stdout=io.TextIOWrapper(sys.stdout.buffer,encoding='utf8')
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 base = "https://picaapi.picacomic.com/"
+
 
 class Pica:
     Order_Default = "ua"  # 默认
@@ -48,7 +49,13 @@ class Pica:
         url = base + "auth/sign-in"
         send = {"email": os.environ.get("PICA_ACCOUNT"), "password": os.environ.get("PICA_PASSWORD")}
         __a = self.http_do("POST", url=url, json=send).text
+        print("----login response---------")
         print(__a)
+        print("----login response---------")
+        if json.loads(__a)["code"] != 200:
+            raise Exception('PICA_ACCOUNT/PICA_PASSWORD ERROR')
+        if 'token' not in __a:
+            raise Exception('PICA_SECRET_KEY ERROR')
         self.headers["authorization"] = json.loads(__a)["data"]["token"]
 
     def comics(self, block="", tag="", order="", page=1):

@@ -1,5 +1,6 @@
 import math
 import os
+import random
 import zipfile
 from configparser import ConfigParser
 
@@ -24,9 +25,13 @@ def filter_comics(comics) -> list:
     comics = [i for i in comics if i['_id'] not in ids]
 
     # 过滤掉指定分区的本子
+    categories_rule = os.environ["CATEGORIES_RULE"]
     categories = os.environ["CATEGORIES"].split(',')
     if categories:
-        comics = [i for i in comics if len(set(i['categories']).intersection(set(categories))) == 0]
+        if categories_rule == 'EXCLUDE':
+            comics = [i for i in comics if len(set(i['categories']).intersection(set(categories))) == 0]
+        else:
+            comics = [i for i in comics if len(set(i['categories']).intersection(set(categories))) > 0]
     return comics
 
 
@@ -42,6 +47,15 @@ def download(self, name: str, i: int, url: str):
     f = open(path, 'wb')
     f.write(self.http_do("GET", url=url).content)
     f.close()
+
+
+def generate_random_str(str_length=16):
+    random_str = ''
+    base_str = 'ABCDEFGHIGKLMNOPQRSTUVWXYZabcdefghigklmnopqrstuvwxyz0123456789'
+    length = len(base_str) - 1
+    for i in range(str_length):
+        random_str += base_str[random.randint(0, length)]
+    return random_str
 
 
 def zip_file(source_file, outputfile_path, block_size=49):
