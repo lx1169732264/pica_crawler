@@ -1,9 +1,7 @@
 import hashlib
 import hmac
-import io
 import json
 import os
-import sys
 from configparser import ConfigParser
 from time import time
 from urllib.parse import urlencode
@@ -14,6 +12,7 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 base = "https://picaapi.picacomic.com/"
+
 
 class Pica:
     Order_Default = "ua"  # 默认
@@ -69,53 +68,62 @@ class Pica:
         url = f"{base}comics?{params}"
         return self.http_do("GET", url).json()
 
-    #排行榜
+    # 排行榜
     def leaderboard(self) -> list:
-        #tt的可选值: H24, D7, D30   分别代表每天/周/月
+        # tt的可选值: H24, D7, D30   分别代表每天/周/月
         args = [("tt", 'H24'), ("ct", 'VC')]
         params = urlencode(args)
         url = f"{base}comics/leaderboard?{params}"
         res = self.http_do("GET", url)
         return json.loads(res.content.decode("utf-8"))["data"]["comics"]
 
-    #获取本子详细信息
+    # 获取本子详细信息
     def comic_info(self, book_id):
         url = f"{base}comics/{book_id}"
         res = self.http_do("GET", url=url)
         return json.loads(res.content.decode())
 
-    #获取本子的章节
+    # 获取本子的章节
     def episodes(self, book_id, page=1):
         url = f"{base}comics/{book_id}/eps?page={page}"
         return self.http_do("GET", url=url)
 
-    #根据章节获取图片
+    # 根据章节获取图片
     def picture(self, book_id, ep_id, page=1):
         url = f"{base}comics/{book_id}/order/{ep_id}/pages?page={page}"
         return self.http_do("GET", url=url)
 
-    def search(self, keyword, sort=Order_Default, page=1):
+    def search(self, keyword, page=1, sort=Order_Default):
         url = f"{base}comics/advanced-search?page={page}"
-        return self.http_do("POST", url=url, json={"keyword": keyword, "sort": sort})
+        res = self.http_do("POST", url=url, json={"keyword": keyword, "sort": sort})
+        return json.loads(res.content.decode("utf-8"))["data"]["comics"]
+
+    def search_all(self, keyword):
+        comics = []
+        if keyword:
+            pages = self.search(keyword)["pages"]
+            for page in range(1, pages + 1):
+                res = self.search(keyword, page)["docs"]
+                comics = comics + res
+        return comics
 
     def categories(self):
         url = f"{base}categories"
         return self.http_do("GET", url=url)
 
-    #收藏/取消收藏本子
+    # 收藏/取消收藏本子
     def favourite(self, book_id):
         url = f"{base}comics/{book_id}/favourite"
         return self.http_do("POST", url=url)
 
-    #获取收藏夹
+    # 获取收藏夹
     def my_favourite(self):
         url = f"{base}users/favourite"
         res = self.http_do("GET", url=url)
         return json.loads(res.content.decode())["data"]["comics"]["docs"]
 
-    #打卡
+    # 打卡
     def punch_in(self):
         url = f"{base}/users/punch-in"
         res = self.http_do("POST", url=url)
         return json.loads(res.content.decode())
-

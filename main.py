@@ -19,7 +19,9 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
 def download_comic(comic):
     cid = comic["_id"]
     title = comic["title"]
-    print('%s | %s:downloading---------------------' % (title, cid))
+    author = comic["author"]
+    categories = comic["categories"]
+    print('%s | %s | %s | %s:downloading---------------------' % (cid, title, author, categories))
     res = []
     episodes = list(p.episodes(cid).json()["data"]["eps"]["docs"])
     episodes.reverse()
@@ -63,6 +65,12 @@ p.login()
 p.punch_in()
 
 comics = filter_comics(p.leaderboard()) + p.my_favourite()
+
+keywords = os.environ["SUBSCRIBE_KEYWORD"].split(',')
+for keyword in keywords:
+    comics += filter_comics(p.search_all(keyword), True, False)
+
+print('id | 本子 | 画师 | 分区')
 for index in range(len(comics)):
     try:
         download_comic(comics[index])
@@ -79,15 +87,16 @@ if not os.path.exists("./zips"):
     os.mkdir('./zips')
 zip_file("./comics", "./zips")
 
+smtpObj = smtplib.SMTP(os.environ["EMAIL_SERVER_HOST"], os.environ["EMAIL_SERVER_PORT"])
+if os.environ["EMAIL_STARTTLS"] == 'true':
+    smtpObj.starttls()
 email_account = os.environ["EMAIL_ACCOUNT"]
-smtpObj = smtplib.SMTP()
-smtpObj.connect(os.environ["EMAIL_SERVER_HOST"])
 smtpObj.login(email_account, os.environ["EMAIL_AUTH_CODE"])
 
 for zipFile in os.listdir('./zips'):
     msg = MIMEMultipart()
     msg['From'] = Header(email_account)
-    msg['Subject'] = Header('pica comics' + generate_random_str(), 'utf-8')
+    msg['Subject'] = Header('pica comics | ' + generate_random_str(), 'utf-8')
     att = MIMEText(open('./zips/' + zipFile, 'rb').read(), 'base64', 'utf-8')
     att["Content-Type"] = 'application/octet-stream'
     att["Content-Disposition"] = 'attachment; filename="' + zipFile + '"'
