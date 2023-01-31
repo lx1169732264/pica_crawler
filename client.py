@@ -99,10 +99,11 @@ class Pica:
 
     def search_all(self, keyword):
         comics = []
-        pages = self.search(keyword)["pages"]
-        for page in range(1, pages):
-            res = self.search(keyword, page)["docs"]
-            comics = comics + res
+        if keyword:
+            pages = self.search(keyword)["pages"]
+            for page in range(1, pages):
+                res = self.search(keyword, page)["docs"]
+                comics = comics + res
         return comics
 
     def categories(self):
