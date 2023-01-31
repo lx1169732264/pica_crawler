@@ -1,4 +1,4 @@
-name: pica_crawler
+name: pica_crawler_dev
 
 on:
   push:
