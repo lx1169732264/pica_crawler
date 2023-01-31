@@ -1,0 +1,58 @@
+name: pica_crawler
+
+on:
+  workflow_dispatch:
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: install dependency
+          run: git checkout dev
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - name: install dependency
+        run: |
+          pip install urllib3
+          pip install requests
+      - name: main logic
+        env:
+          PICA_SECRET_KEY: ${{secrets.PICA_SECRET_KEY}}
+          PICA_ACCOUNT: ${{secrets.PICA_ACCOUNT}}
+          PICA_PASSWORD: ${{secrets.PICA_PASSWORD}}
+          EMAIL_ACCOUNT: ${{secrets.EMAIL_ACCOUNT}}
+          EMAIL_AUTH_CODE: ${{secrets.EMAIL_AUTH_CODE}}
+          # 收信邮箱的smtp服务器地址
+          EMAIL_SERVER_HOST: smtp.qq.com
+          # 收信邮箱服务器的加密方式 true:STARTTLS false:TLS    outlook邮箱只能为true,qq邮箱true和false都可以
+          EMAIL_STARTTLS: true
+          # 收信邮箱服务器的端口
+          EMAIL_SERVER_PORT: 587
+          # 过滤分区 用,分隔
+          CATEGORIES: CG雜圖,生肉,耽美花園,偽娘哲學,扶他樂園,性轉換,SAO 刀劍神域,WEBTOON,Cosplay
+          # CATEGORIES_RULE 过滤规则    INCLUDE: 包含任意一个分区就下载  EXCLUDE: 包含任意一个分区就不下载
+          CATEGORIES_RULE: EXCLUDE
+          # 订阅的关键词,下载根据关键词搜索到的所有本子.为空则关闭关键词订阅   建议填画师名字,填模糊的本子标题会导致搜索结果过多,推送不了
+          SUBSCRIBE_KEYWORD: ひぐま屋 (野良ヒグマ)
+          # 订阅的分区,下载分区中3天内上传的本子
+          # SUBSCRIBE_CATEGORIES:
+        # 每次运行后都会在downloaded.txt里追加本次下载过的漫画
+        run: |
+          python main.py
+          git add downloaded.txt
+      # push代码保留本次的下载结果
+      - name: commit & push
+        uses: actions-go/push@master
+        with:
+          # 提交代码时配置的git邮箱
+          author-email: 'actions@github.com'
+          # 提交代码时配置的提交人姓名
+          author-name: 'GitHub Actions'
+          commit-message: 'update downloaded comics'
+          remote-ref: refs/origin/dev
+          token: ${{ secrets.GIT_TOKEN }}
