@@ -1,6 +1,9 @@
 name: pica_crawler
 
 on:
+  push:
+      branches:
+        - dev
   workflow_dispatch:
 
 jobs:
@@ -11,11 +14,10 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: install dependency
-          run: git checkout dev
-      - uses: actions/setup-python@v4
+      - name: Checkout
+        uses: actions/checkout@v3.3.0
         with:
-          python-version: "3.10"
+          ref: refs/dev
       - name: install dependency
         run: |
           pip install urllib3
