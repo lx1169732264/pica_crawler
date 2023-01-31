@@ -2,7 +2,7 @@ name: pica_crawler
 
 on:
   schedule:
-    - cron: "30 9 * * *"
+    - cron: "0 0 * * *"
   workflow_dispatch:
 
 jobs:
@@ -27,24 +27,31 @@ jobs:
           PICA_PASSWORD: ${{secrets.PICA_PASSWORD}}
           EMAIL_ACCOUNT: ${{secrets.EMAIL_ACCOUNT}}
           EMAIL_AUTH_CODE: ${{secrets.EMAIL_AUTH_CODE}}
-          # 邮箱的smtp服务器地址
+          # 收信邮箱的smtp服务器地址
           EMAIL_SERVER_HOST: smtp.qq.com
-          # 哔咔的分区
+          # 收信邮箱服务器的加密方式 true:STARTTLS false:TLS    outlook邮箱只能为true,qq邮箱true和false都可以
+          EMAIL_STARTTLS: true
+          # 收信邮箱服务器的端口
+          EMAIL_SERVER_PORT: 587
+          # 过滤分区 用,分隔
           CATEGORIES: CG雜圖,生肉,耽美花園,偽娘哲學,扶他樂園,性轉換,SAO 刀劍神域,WEBTOON,Cosplay
           # CATEGORIES_RULE 过滤规则    INCLUDE: 包含任意一个分区就下载  EXCLUDE: 包含任意一个分区就不下载
           CATEGORIES_RULE: EXCLUDE
-          # 每次运行后都会在downloaded.txt里追加本次下载过的漫画
+          # 订阅的关键词,下载根据关键词搜索到的所有本子.为空则关闭关键词订阅   建议填画师名字,填模糊的本子标题会导致搜索结果过多,推送不了
+          # SUBSCRIBE_KEYWORD: ひぐま屋 (野良ヒグマ)
+          # 订阅的分区,下载分区中3天内上传的本子
+          # SUBSCRIBE_CATEGORIES:
+        # 每次运行后都会在downloaded.txt里追加本次下载过的漫画
         run: |
           python main.py
           git add downloaded.txt
-        # push代码保留本次的下载结果
+      # push代码保留本次的下载结果
       - name: commit & push
         uses: actions-go/push@master
         with:
           # 提交代码时配置的git邮箱
-          author-email: '1169732264@qq.com'
+          author-email: 'actions@github.com'
           # 提交代码时配置的提交人姓名
-          author-name: 'lx'
+          author-name: 'GitHub Actions'
           commit-message: 'update downloaded comics'
-          remote: origin
           token: ${{ secrets.GIT_TOKEN }}
