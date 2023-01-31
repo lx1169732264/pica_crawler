@@ -1,9 +1,7 @@
 import hashlib
 import hmac
-import io
 import json
 import os
-import sys
 from configparser import ConfigParser
 from time import time
 from urllib.parse import urlencode
@@ -94,9 +92,18 @@ class Pica:
         url = f"{base}comics/{book_id}/order/{ep_id}/pages?page={page}"
         return self.http_do("GET", url=url)
 
-    def search(self, keyword, sort=Order_Default, page=1):
+    def search(self, keyword, page=1, sort=Order_Default):
         url = f"{base}comics/advanced-search?page={page}"
-        return self.http_do("POST", url=url, json={"keyword": keyword, "sort": sort})
+        res = self.http_do("POST", url=url, json={"keyword": keyword, "sort": sort})
+        return json.loads(res.content.decode("utf-8"))["data"]["comics"]
+
+    def search_all(self, keyword):
+        comics = []
+        pages = self.search(keyword)["pages"]
+        for page in range(1, pages):
+            res = self.search(keyword, page)["docs"]
+            comics = comics + res
+        return comics
 
     def categories(self):
         url = f"{base}categories"
