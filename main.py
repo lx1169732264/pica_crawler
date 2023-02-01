@@ -1,23 +1,17 @@
 # encoding: utf-8
 import io
 import json
-import shutil
-import smtplib
 import sys
 import threading
-import time
-from email.header import Header
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 from client import Pica
-from randomString import get_random_str
 from util import *
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
 
 
 def download_comic(comic):
+    print(comic)
     cid = comic["_id"]
     title = comic["title"]
     author = comic["author"]
@@ -65,11 +59,15 @@ p = Pica()
 p.login()
 p.punch_in()
 
+# 排行榜/收藏夹的漫画
 comics = filter_comics(p.leaderboard()) + p.my_favourite()
 
-# keywords = os.environ["SUBSCRIBE_KEYWORD"].split(',')
-# for keyword in keywords:
-#     comics += filter_comics(p.search_all(keyword), True, False)
+# 关键词订阅的漫画
+keywords = os.environ["SUBSCRIBE_KEYWORD"].split(',')
+for keyword in keywords:
+    subscribe_comics = filter_comics(p.search_all(keyword))
+    print('关键词%s : 订阅了%d本漫画' % (keyword, len(comics)))
+    comics += subscribe_comics
 
 print('id | 本子 | 画师 | 分区')
 for index in range(len(comics)):
@@ -81,32 +79,3 @@ for index in range(len(comics)):
     except KeyError:
         print('download failed,' + str(index))
         continue
-
-if not os.path.exists("./comics"):
-    os.mkdir('./comics')
-if not os.path.exists("./zips"):
-    os.mkdir('./zips')
-zip_file("./comics", "./zips")
-
-smtpObj = smtplib.SMTP(os.environ["EMAIL_SERVER_HOST"], os.environ["EMAIL_SERVER_PORT"])
-if os.environ["EMAIL_STARTTLS"] == 'true':
-    smtpObj.starttls()
-email_account = os.environ["EMAIL_ACCOUNT"]
-smtpObj.login(email_account, os.environ["EMAIL_AUTH_CODE"])
-
-for zipFile in os.listdir('./zips'):
-    msg = MIMEMultipart()
-    msg['From'] = Header(email_account)
-    msg['Subject'] = Header('pica comics | ' + generate_random_str(), 'utf-8')
-    att = MIMEText(open('./zips/' + zipFile, 'rb').read(), 'base64', 'utf-8')
-    att["Content-Type"] = 'application/octet-stream'
-    att["Content-Disposition"] = 'attachment; filename="' + zipFile + '"'
-    msg.attach(att)
-    msg.attach(MIMEText(get_random_str(), 'html', 'utf-8'))
-    smtpObj.sendmail(email_account, email_account, msg.as_string())
-    # 短时间频繁发邮件容易被邮件服务器检测到, 给个较长的间隔时间
-    time.sleep(20)
-smtpObj.quit()
-
-shutil.rmtree('./zips')
-shutil.rmtree('./comics')

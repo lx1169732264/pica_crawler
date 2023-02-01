@@ -60,7 +60,8 @@ def generate_random_str(str_length=16):
     return random_str
 
 
-def zip_file(source_file, outputfile_path, block_size=49):
+def zip_file(source_file, outputfile_path):
+    block_size = int(os.environ["EMAIL_ATTACH_SIZE"]) - 1
     if not os.path.exists(outputfile_path):
         os.mkdir(outputfile_path)
     size_Mbit = block_size * 1024 * 1024
