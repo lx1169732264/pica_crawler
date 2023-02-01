@@ -67,9 +67,9 @@ p.punch_in()
 
 comics = filter_comics(p.leaderboard()) + p.my_favourite()
 
-keywords = os.environ["SUBSCRIBE_KEYWORD"].split(',')
-for keyword in keywords:
-    comics += filter_comics(p.search_all(keyword), True, False)
+# keywords = os.environ["SUBSCRIBE_KEYWORD"].split(',')
+# for keyword in keywords:
+#     comics += filter_comics(p.search_all(keyword), True, False)
 
 print('id | 本子 | 画师 | 分区')
 for index in range(len(comics)):

@@ -38,7 +38,7 @@ jobs:
           # CATEGORIES_RULE 过滤规则    INCLUDE: 包含任意一个分区就下载  EXCLUDE: 包含任意一个分区就不下载
           CATEGORIES_RULE: EXCLUDE
           # 订阅的关键词,下载根据关键词搜索到的所有本子.为空则关闭关键词订阅   建议填画师名字,填模糊的本子标题会导致搜索结果过多,推送不了
-          SUBSCRIBE_KEYWORD: ひぐま屋 (野良ヒグマ),アキレルショウジョ
+          #SUBSCRIBE_KEYWORD: ひぐま屋 (野良ヒグマ),アキレルショウジョ
         # 每次运行后都会在downloaded.txt里追加本次下载过的漫画
         run: |
           python main.py
