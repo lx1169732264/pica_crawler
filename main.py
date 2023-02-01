@@ -11,6 +11,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from client import Pica
+from randomString import get_random_str
 from util import *
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
@@ -101,7 +102,7 @@ for zipFile in os.listdir('./zips'):
     att["Content-Type"] = 'application/octet-stream'
     att["Content-Disposition"] = 'attachment; filename="' + zipFile + '"'
     msg.attach(att)
-    msg.attach(MIMEText('今天夜间到明天白天，多云间阴天，有雷阵雨，局部雨势较大，气温度，吹偏南风级。' + generate_random_str(), 'html', 'utf-8'))
+    msg.attach(MIMEText(get_random_str(), 'html', 'utf-8'))
     smtpObj.sendmail(email_account, email_account, msg.as_string())
     # 短时间频繁发邮件容易被邮件服务器检测到, 给个较长的间隔时间
     time.sleep(20)
