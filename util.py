@@ -19,19 +19,21 @@ def get_cfg(section: str, key: str):
     return dict(parser.items(section))[key]
 
 
-def filter_comics(comics) -> list:
+def filter_comics(comics, by_id=True, by_categories=True) -> list:
     # 过滤掉已下载的本子
-    ids = open('./downloaded.txt', 'r').read().split('\n')
-    comics = [i for i in comics if i['_id'] not in ids]
+    if by_id:
+        ids = open('./downloaded.txt', 'r').read().split('\n')
+        comics = [i for i in comics if i['_id'] not in ids]
 
     # 过滤掉指定分区的本子
-    categories_rule = os.environ["CATEGORIES_RULE"]
-    categories = os.environ["CATEGORIES"].split(',')
-    if categories:
-        if categories_rule == 'EXCLUDE':
-            comics = [i for i in comics if len(set(i['categories']).intersection(set(categories))) == 0]
-        else:
-            comics = [i for i in comics if len(set(i['categories']).intersection(set(categories))) > 0]
+    if by_categories:
+        categories_rule = os.environ["CATEGORIES_RULE"]
+        categories = os.environ["CATEGORIES"].split(',')
+        if categories:
+            if categories_rule == 'EXCLUDE':
+                comics = [i for i in comics if len(set(i['categories']).intersection(set(categories))) == 0]
+            else:
+                comics = [i for i in comics if len(set(i['categories']).intersection(set(categories))) > 0]
     return comics
 
 
