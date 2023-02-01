@@ -29,6 +29,8 @@ jobs:
           EMAIL_AUTH_CODE: ${{secrets.EMAIL_AUTH_CODE}}
           # 收信邮箱的smtp服务器地址
           EMAIL_SERVER_HOST: smtp.qq.com
+          # 压缩包的最大大小(MB),也就是收信邮箱支持的最大附件大小 qq/新浪:50  outlook:20
+          EMAIL_ATTACH_SIZE: 50
           # 收信邮箱服务器的加密方式 true:STARTTLS false:TLS    outlook邮箱只能为true,qq邮箱true和false都可以
           EMAIL_STARTTLS: true
           # 收信邮箱服务器的端口
@@ -37,13 +39,14 @@ jobs:
           CATEGORIES: CG雜圖,生肉,耽美花園,偽娘哲學,扶他樂園,性轉換,SAO 刀劍神域,WEBTOON,Cosplay
           # CATEGORIES_RULE 过滤规则    INCLUDE: 包含任意一个分区就下载  EXCLUDE: 包含任意一个分区就不下载
           CATEGORIES_RULE: EXCLUDE
-          # 订阅的关键词,下载根据关键词搜索到的所有本子.为空则关闭关键词订阅   建议填画师名字,填模糊的本子标题会导致搜索结果过多,推送不了
-          #SUBSCRIBE_KEYWORD: ひぐま屋 (野良ヒグマ),アキレルショウジョ
-        # 每次运行后都会在downloaded.txt里追加本次下载过的漫画
+          # 订阅的关键词,会下载x天范围内上传的漫画    为空则关闭关键词订阅 用,分隔
+          SUBSCRIBE_KEYWORD: ひぐま屋 (野良ヒグマ),アキレルショウジョ,オクモト悠太,ゐちぼっち,黒本君,もすきーと音
+          # 订阅的x天范围     git actions运行时填小一点,免得漫画过多邮箱推送不了,本地运行时随便填
+          SUBSCRIBE_DAYS: 7
         run: |
           python main.py
+          python sendEmail.py
           git add downloaded.txt
-      # push代码保留本次的下载结果
       - name: commit & push
         uses: actions-go/push@master
         with:

@@ -3,6 +3,7 @@ import hmac
 import json
 import os
 from configparser import ConfigParser
+from datetime import datetime
 from time import time
 from urllib.parse import urlencode
 
@@ -93,7 +94,7 @@ class Pica:
         url = f"{base}comics/{book_id}/order/{ep_id}/pages?page={page}"
         return self.http_do("GET", url=url)
 
-    def search(self, keyword, page=1, sort=Order_Default):
+    def search(self, keyword, page=1, sort=Order_Latest):
         url = f"{base}comics/advanced-search?page={page}"
         res = self.http_do("POST", url=url, json={"keyword": keyword, "sort": sort})
         return json.loads(res.content.decode("utf-8"))["data"]["comics"]
@@ -103,8 +104,13 @@ class Pica:
         if keyword:
             pages = self.search(keyword)["pages"]
             for page in range(1, pages + 1):
-                res = self.search(keyword, page)["docs"]
-                comics = comics + res
+                docs = self.search(keyword, page)["docs"]
+                res = [i for i in docs if
+                       (datetime.now() - datetime.strptime(i["updated_at"], "%Y-%m-%dT%H:%M:%S.%fZ")).days <= int(
+                           os.environ["SUBSCRIBE_DAYS"])]
+                comics += res
+                if len(docs) != len(res):
+                    break
         return comics
 
     def categories(self):
