@@ -11,7 +11,6 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
 
 
 def download_comic(comic):
-    print(comic)
     cid = comic["_id"]
     title = comic["title"]
     author = comic["author"]
