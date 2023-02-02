@@ -66,7 +66,7 @@ comics = filter_comics(p.leaderboard()) + p.my_favourite()
 keywords = os.environ["SUBSCRIBE_KEYWORD"].split(',')
 for keyword in keywords:
     subscribe_comics = filter_comics(p.search_all(keyword))
-    print('关键词%s : 订阅了%d本漫画' % (keyword, len(comics)))
+    print('关键词%s : 订阅了%d本漫画' % (keyword, len(subscribe_comics)))
     comics += subscribe_comics
 
 print('id | 本子 | 画师 | 分区')
