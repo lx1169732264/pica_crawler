@@ -78,3 +78,9 @@ for index in range(len(comics)):
     except KeyError:
         print('download failed,' + str(index))
         continue
+
+if not os.path.exists("./comics"):
+    os.mkdir('./comics')
+if not os.path.exists("./zips"):
+    os.mkdir('./zips')
+zip_file("./comics", "./zip", sys.maxsize)

@@ -1,6 +1,6 @@
 import os
 
-path = 'D:/vol/'
+path = './comics/'
 dirs = os.listdir(path)
 for i in range(len(dirs)):
     d = dirs[i]
