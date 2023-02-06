@@ -60,15 +60,16 @@ def generate_random_str(str_length=16):
     return random_str
 
 
-def zip_file(source_file, outputfile_path):
-    block_size = int(os.environ["EMAIL_ATTACH_SIZE"]) - 1
-    if not os.path.exists(outputfile_path):
-        os.mkdir(outputfile_path)
+def zip_file(source_dir, target_dir, block_size=None):
+    if not block_size:
+        block_size = int(os.environ["EMAIL_ATTACH_SIZE"]) - 1
+    if not os.path.exists(target_dir):
+        os.mkdir(target_dir)
     size_Mbit = block_size * 1024 * 1024
     file_size_temp = 0
-    for dir_path, dir_name, file_names in os.walk(source_file):
+    for dir_path, dir_name, file_names in os.walk(source_dir):
         # 要是不replace，就从根目录开始复制
-        file_path = dir_path.replace(source_file, "")
+        file_path = dir_path.replace(source_dir, "")
         # 实现当前文件夹以及包含的所有文件
         file_path = file_path and file_path + os.sep or ''
         for file_name in file_names:
@@ -80,13 +81,13 @@ def zip_file(source_file, outputfile_path):
         createVar = locals()
         for i in range(1, (count_sum + 1)):
             zip = "f" + str(i) + ".zip"
-            path_list.append(os.path.join(outputfile_path, zip))
-            createVar['f' + str(i)] = zipfile.ZipFile(os.path.join(outputfile_path, zip), 'w', zipfile.ZIP_DEFLATED)
+            path_list.append(os.path.join(target_dir, zip))
+            createVar['f' + str(i)] = zipfile.ZipFile(os.path.join(target_dir, zip), 'w', zipfile.ZIP_DEFLATED)
         count = 1
         file_size_temp = 0
-        for dir_path, dir_name, file_names in os.walk(source_file):
+        for dir_path, dir_name, file_names in os.walk(source_dir):
             # 要是不replace，就从根目录开始复制
-            file_path = dir_path.replace(source_file, "")
+            file_path = dir_path.replace(source_dir, "")
             # 实现当前文件夹以及包含的所有文件
             file_path = file_path and file_path + os.sep or ''
             for file_name in file_names:

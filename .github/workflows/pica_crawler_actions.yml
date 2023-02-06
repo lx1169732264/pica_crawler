@@ -1,8 +1,9 @@
 name: pica_crawler
 
 on:
-  schedule:
-    - cron: "0 0 * * *"
+  #将下面两行代码取消注释
+  #schedule:
+    #- cron: "0 0 * * *"
   workflow_dispatch:
 
 jobs:
@@ -10,9 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
-        with:
-          persist-credentials: false
-          fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"
@@ -25,16 +23,6 @@ jobs:
           PICA_SECRET_KEY: ${{secrets.PICA_SECRET_KEY}}
           PICA_ACCOUNT: ${{secrets.PICA_ACCOUNT}}
           PICA_PASSWORD: ${{secrets.PICA_PASSWORD}}
-          EMAIL_ACCOUNT: ${{secrets.EMAIL_ACCOUNT}}
-          EMAIL_AUTH_CODE: ${{secrets.EMAIL_AUTH_CODE}}
-          # 收信邮箱的smtp服务器地址
-          EMAIL_SERVER_HOST: smtp.qq.com
-          # 压缩包的最大大小(MB),也就是收信邮箱支持的最大附件大小 qq/新浪:50  outlook:20
-          EMAIL_ATTACH_SIZE: 50
-          # 收信邮箱服务器的加密方式 true:STARTTLS false:TLS    outlook邮箱只能为true,qq邮箱true和false都可以
-          EMAIL_STARTTLS: true
-          # 收信邮箱服务器的端口
-          EMAIL_SERVER_PORT: 587
           # 过滤分区 用,分隔
           CATEGORIES: CG雜圖,生肉,耽美花園,偽娘哲學,扶他樂園,性轉換,SAO 刀劍神域,WEBTOON,Cosplay
           # CATEGORIES_RULE 过滤规则    INCLUDE: 包含任意一个分区就下载  EXCLUDE: 包含任意一个分区就不下载
@@ -45,14 +33,32 @@ jobs:
           SUBSCRIBE_DAYS: 7
         run: |
           python main.py
-          python sendEmail.py
           git add downloaded.txt
+      - name: upload-artifact
+        uses: actions/upload-artifact@v3.1.0
+        with:
+          name: pica-comics
+          path: comics/
+          retention-days: 90
+      - name: send email
+        env:
+          EMAIL_ACCOUNT: ${{secrets.EMAIL_ACCOUNT}}
+          EMAIL_AUTH_CODE: ${{secrets.EMAIL_AUTH_CODE}}
+          # 收信邮箱的smtp服务器地址
+          EMAIL_SERVER_HOST: smtp.qq.com
+          # 压缩包的最大大小(MB),也就是收信邮箱支持的最大附件大小 qq/新浪:50  outlook:20
+          EMAIL_ATTACH_SIZE: 50
+          # 收信邮箱服务器的加密方式 true:STARTTLS false:TLS    outlook邮箱只能为true,qq邮箱true和false都可以
+          EMAIL_STARTTLS: true
+          # 收信邮箱服务器的端口
+          EMAIL_SERVER_PORT: 587
+        run: |
+          # python sendEmail.py
+          echo '如果不需要邮件推送的功能,可以将上一行代码注释掉     首次运行时也建议注释,排行榜上的漫画都没推送过,邮箱接受不了大量的漫画,等首次运行结束后再开启'
       - name: commit & push
         uses: actions-go/push@master
         with:
-          # 提交代码时配置的git邮箱
           author-email: 'actions@github.com'
-          # 提交代码时配置的提交人姓名
           author-name: 'GitHub Actions'
           commit-message: 'update downloaded comics'
           token: ${{ secrets.GIT_TOKEN }}

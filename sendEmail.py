@@ -7,10 +7,6 @@ from email.mime.text import MIMEText
 from randomString import get_random_str
 from util import *
 
-if not os.path.exists("./comics"):
-    os.mkdir('./comics')
-if not os.path.exists("./zips"):
-    os.mkdir('./zips')
 zip_file("./comics", "./zips")
 
 smtpObj = smtplib.SMTP(os.environ["EMAIL_SERVER_HOST"], os.environ["EMAIL_SERVER_PORT"])
