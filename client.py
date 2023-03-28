@@ -84,10 +84,24 @@ class Pica:
         res = self.http_do("GET", url=url)
         return json.loads(res.content.decode())
 
-    # 获取本子的章节
+    # 获取本子的章节 一页最大40条
     def episodes(self, book_id, page=1):
         url = f"{base}comics/{book_id}/eps?page={page}"
         return self.http_do("GET", url=url)
+
+    # 获取本子的全部章节
+    def episodes_all(self, book_id) -> list:
+        first_page = self.episodes(book_id).json()
+        pages = first_page["data"]["eps"]["pages"]
+        total = first_page["data"]["eps"]["total"]
+        episodes = list(first_page["data"]["eps"]["docs"])
+        while pages > 1:
+            episodes.extend(list(self.episodes(book_id, pages).json()["data"]["eps"]["docs"]))
+            pages -= 1
+        episodes = sorted(episodes, key=lambda x: x['order'])
+        if len(episodes) != total:
+            raise Exception('wrong number of episodes,expect:' + total + ',actual:' + len(episodes))
+        return episodes
 
     # 根据章节获取图片
     def picture(self, book_id, ep_id, page=1):

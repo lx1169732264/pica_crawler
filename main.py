@@ -17,8 +17,7 @@ def download_comic(comic):
     categories = comic["categories"]
     print('%s | %s | %s | %s:downloading---------------------' % (cid, title, author, categories))
     res = []
-    episodes = list(p.episodes(cid).json()["data"]["eps"]["docs"])
-    episodes.reverse()
+    episodes = p.episodes_all(cid)
     for eid in episodes:
         page = 1
         while True:
