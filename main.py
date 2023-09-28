@@ -13,16 +13,18 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
 
 # only_latest: true增量下载    false全量下载
 def download_comic(comic, only_latest):
-    print(only_latest)
     cid = comic["_id"]
     title = comic["title"]
     author = comic["author"]
     categories = comic["categories"]
-    print('%s | %s | %s | %s | %s:downloading---------------------' % (cid, title, author, categories,only_latest))
     episodes = p.episodes_all(cid)
     # 增量更新
     if only_latest:
         episodes = filter_comics(comic, episodes)
+    if episodes:
+        print('%s | %s | %s | %s | %s:downloading---------------------' % (cid, title, author, categories,only_latest))
+    else:
+        return
 
     pics = []
     for eid in episodes:
@@ -86,3 +88,8 @@ for comic in favourites + comics:
     except:
         print('download failed,{},{},{}', comic['_id'], comic["title"], traceback.format_exc())
         continue
+
+# 记录上次运行时间
+f = open('./run_time_history.txt', 'ab')
+f.write((str(datetime.strftime(datetime.now(),'%Y-%m-%d %H:%M:%S')) + '\n').encode())
+f.close()

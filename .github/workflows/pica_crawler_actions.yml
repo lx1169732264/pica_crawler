@@ -34,6 +34,7 @@ jobs:
         run: |
           python main.py
           git add downloaded.txt
+          git add run_time_history.txt
       - name: upload-artifact
         uses: actions/upload-artifact@v3.1.0
         with:

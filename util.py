@@ -1,4 +1,4 @@
-import math
+import operator
 import os
 import random
 import zipfile
@@ -32,7 +32,7 @@ def filter_comics(comic, episodes) -> list:
     # 已下载过的漫画,执行增量更新
     if comic["_id"] in ids:
         episodes = [i for i in episodes if
-                    (datetime.strptime(i['updated_at'], '%Y-%m-%dT%H:%M:%S.%fZ') - get_latest_run_time()).seconds > 0]
+                    (datetime.strptime(i['updated_at'], '%Y-%m-%dT%H:%M:%S.%fZ') - get_latest_run_time()).total_seconds() > 0]
     # 过滤掉指定分区的本子
     categories_rule = os.environ["CATEGORIES_RULE"]
     categories = os.environ["CATEGORIES"].split(',')
@@ -76,25 +76,13 @@ def zip_file(source_dir, target_dir, block_size=None):
         block_size = int(os.environ["EMAIL_ATTACH_SIZE"]) - 1
     if not os.path.exists(target_dir):
         os.mkdir(target_dir)
+    #单个压缩包的大小(MB)
     size_Mbit = block_size * 1024 * 1024
-    file_size_temp = 0
-    for dir_path, dir_name, file_names in os.walk(source_dir):
-        # 要是不replace，就从根目录开始复制
-        file_path = dir_path.replace(source_dir, "")
-        # 实现当前文件夹以及包含的所有文件
-        file_path = file_path and file_path + os.sep or ''
-        for file_name in file_names:
-            file_size_temp += os.path.getsize(os.path.join(dir_path, file_name))
-    count_sum = math.ceil(file_size_temp / size_Mbit)
+    count = 1
+    createVar = locals()
 
     try:
         path_list = []
-        createVar = locals()
-        for i in range(1, (count_sum + 1)):
-            zip = "f" + str(i) + ".zip"
-            path_list.append(os.path.join(target_dir, zip))
-            createVar['f' + str(i)] = zipfile.ZipFile(os.path.join(target_dir, zip), 'w', zipfile.ZIP_DEFLATED)
-        count = 1
         file_size_temp = 0
         for dir_path, dir_name, file_names in os.walk(source_dir):
             # 要是不replace，就从根目录开始复制
@@ -103,15 +91,21 @@ def zip_file(source_dir, target_dir, block_size=None):
             file_path = file_path and file_path + os.sep or ''
             for file_name in file_names:
                 size = os.path.getsize(os.path.join(dir_path, file_name))
+                #根据累计文件大小进行分卷压缩
                 if file_size_temp + size > size_Mbit:
                     count = count + 1
                     file_size_temp = size
                 else:
                     file_size_temp += size
-                createVar['f' + str(count)].write(os.path.join(dir_path, file_name), file_path + file_name)
-        for i in range(1, (count_sum + 1)):
-            createVar['f' + str(i)].close()
+                #var_index为压缩包文件名,左补零为了os.listdir这个函数能够正确地对数字进行排序
+                var_index = str(count).zfill(2)
+                #压缩包不存在则创建
+                if not operator.contains(createVar, var_index):
+                    createVar[var_index] = zipfile.ZipFile(os.path.join(target_dir, var_index + ".zip"), 'w', zipfile.ZIP_DEFLATED)
+                #向压缩包写入文件
+                createVar[var_index].write(os.path.join(dir_path, file_name), file_path + file_name)
         return path_list
     finally:
-        for i in range(1, (count_sum + 1)):
-            createVar['f' + str(i)].close()
+        for i in range(1, count):
+            var_index = str(count).zfill(2)
+            createVar[var_index].close()
