@@ -22,6 +22,9 @@ def get_cfg(section: str, key: str):
 
 def get_latest_run_time():
     run_times = open('./run_time_history.txt', 'r').read().splitlines()
+    #去掉空行
+    run_times = [i for i in run_times if i]
+    #最新一次记录的运行时间
     latest_run_time = run_times.pop()
     return datetime.strptime(latest_run_time, '%Y-%m-%d %H:%M:%S')
 
