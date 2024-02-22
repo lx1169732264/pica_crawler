@@ -2,8 +2,8 @@ name: pica_crawler
 
 on:
   #将下面两行代码取消注释
-  schedule:
-    - cron: "0 0 * * *"
+  #schedule:
+    #- cron: "0 0 * * *"
   workflow_dispatch:
 
 jobs:
