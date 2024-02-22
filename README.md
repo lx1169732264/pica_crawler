@@ -87,8 +87,6 @@ docker run --name picacg-download-container -d \
 | PICA_ACCOUNT    | 哔咔登录的账号                                               |
 | PICA_PASSWORD   | 哔咔登录的密码                                               |
 | EMAIL_ACCOUNT   | 接收漫画的邮箱                                               |
-| REQUEST_PROXY   | 下载图片使用的http代理(不支持socks), 例: http://expmla.com:port/ |
-| PACKAGE_TYPE    | 是否打包为zip, 默认 False (使用docker部署是建议为True)                                    |
 | BARK_URL        | 允许打包完成 or 下载完成发送自定义消息 例: `https://api.day.app/{your_keys}/picacg下载成功` |
 | EMAIL_AUTH_CODE | 邮箱的授权码,[参考qq邮箱的这篇文档](https://service.mail.qq.com/cgi-bin/help?subtype=1&&id=28&&no=1001256) |
 | GIT_TOKEN       | [参考这篇文章](http://t.zoukankan.com/joe235-p-15152380.html),只勾选repo的权限,Expiration设置为No Expiration |
