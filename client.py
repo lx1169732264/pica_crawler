@@ -39,7 +39,12 @@ class Pica:
         header["signature"] = hc.hexdigest()
         header["time"] = ts
         kwargs.setdefault("headers", header)
-        response = self.__s.request(method=method, url=url, verify=False, **kwargs)
+        proxy = os.environ.get("REQUEST_PROXY")
+        if proxy:
+            proxies = {'http': proxy, 'https': proxy}
+        else:
+            proxies = None
+        response = self.__s.request(method=method, url=url, verify=False, proxies=proxies, **kwargs)
         return response
 
     def login(self):

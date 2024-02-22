@@ -4,12 +4,12 @@ import json
 import sys
 import threading
 import traceback
+import shutil
 
 from client import Pica
 from util import *
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')
-
 
 # only_latest: true增量下载    false全量下载
 def download_comic(comic, only_latest):
@@ -93,3 +93,12 @@ for comic in favourites + comics:
 f = open('./run_time_history.txt', 'ab')
 f.write((str(datetime.strftime(datetime.now(),'%Y-%m-%d %H:%M:%S')) + '\n').encode())
 f.close()
+
+# 打包成zip文件, 并删除旧数据
+if os.environ.get("PACKAGE_TYPE", "False") == "True":
+    zip_subfolders('./comics', './output')
+    shutil.rmtree('./comics')
+
+# 发送消息通知
+if os.environ.get("BARK_URL"):
+    request.get(os.environ.get("BARK_URL"))

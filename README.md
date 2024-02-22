@@ -16,6 +16,62 @@
 4. 运行`main.py`,下载好的漫画在`/comics`这个文件夹内
 5. git上提交downloaded.txt到远程仓库,避免重复下载
 
+# docker 运行
+
+新增了环境变量 `PACKAGE_TYPE`, 参数为 True 和 False
+设置为True时, 会根据漫画名称压缩成zip包, 以供 Komga 等漫画库 使用, 也会删除comics文件夹 ( 避免docker容器占用过多硬盘 )
+```python
+# main.py
+if os.environ.get("PACKAGE_TYPE", "False") == "True":
+    # 打包成zip文件, 并删除旧数据
+    zip_subfolders('./comics', './output')
+    shutil.rmtree('./comics')
+```
+
+新增了环境变量 `REQUEST_PROXY`, 这样下载图片时允许使用代理了
+```python
+# client.py
+proxy = os.environ.get("REQUEST_PROXY")
+if proxy:
+    proxies = {'http': proxy, 'https': proxy}
+else:
+    proxies = None
+response = self.__s.request(method=method, url=url, verify=False, proxies=proxies, **kwargs)
+return response
+```
+
+新增了环境变量 `BARK_URL`, bark消息通知
+  允许打包完成 or 下载完成发送自定义消息, 例: `https://api.day.app/{your_keys}/picacg下载成功`
+```python
+# main.py
+if os.environ.get("BARK_URL"):
+    # 发送消息通知
+    request.get(os.environ.get("BARK_URL"))
+```
+
+可以挂载这两个目录
+工作目录为 `/app/comics` 存放下载漫画图片的文件夹, `/app/output` 存放输出zip的文件夹
+
+
+1. `docker-compose.yml` 参考 docker-compose.yml 文件
+
+2. `docker cli` 最小运行
+
+PICA_SECRET_KEY可以不用更改, 如果需要更改时, 注意是单引号内容
+
+docker部署建议将PACKAGE_TYPE打开, 同时挂载/app/output目录
+```docker
+docker run --name picacg-download-container -d \
+    -e PICA_ACCOUNT="账户名称" \
+    -e PICA_PASSWORD="账户密码" \
+    -e REQUEST_PROXY="http代理(可选)" \
+    -e BARK_URL="bark消息通知(可选)" \
+    -e PACKAGE_TYPE="True" \
+    -e PICA_SECRET_KEY='~d}$Q7$eIni=V)9\RK/P.RM4;9[7|@/CA}b~OW!3?EV`:<>M7pddUBL5n|0/*Cn' \
+    -v ./comics:/app/comics \
+    -v ./output:/app/output \
+    yuanzhangzcc/picacg-download:latest
+```
 
 # git actions运行
 
@@ -31,6 +87,9 @@
 | PICA_ACCOUNT    | 哔咔登录的账号                                               |
 | PICA_PASSWORD   | 哔咔登录的密码                                               |
 | EMAIL_ACCOUNT   | 接收漫画的邮箱                                               |
+| REQUEST_PROXY   | 下载图片使用的http代理(不支持socks), 例: http://expmla.com:port/ |
+| PACKAGE_TYPE    | 是否打包为zip, 默认 False (使用docker部署是建议为True)                                    |
+| BARK_URL        | 允许打包完成 or 下载完成发送自定义消息 例: `https://api.day.app/{your_keys}/picacg下载成功` |
 | EMAIL_AUTH_CODE | 邮箱的授权码,[参考qq邮箱的这篇文档](https://service.mail.qq.com/cgi-bin/help?subtype=1&&id=28&&no=1001256) |
 | GIT_TOKEN       | [参考这篇文章](http://t.zoukankan.com/joe235-p-15152380.html),只勾选repo的权限,Expiration设置为No Expiration |
 

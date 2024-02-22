@@ -112,3 +112,17 @@ def zip_file(source_dir, target_dir, block_size=None):
         for i in range(1, count):
             var_index = str(count).zfill(2)
             createVar[var_index].close()
+
+def zip_subfolders(source_dir, target_dir):
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+
+    for folder_name in os.listdir(source_dir):
+        folder_path = os.path.join(source_dir, folder_name)
+        if os.path.isdir(folder_path):
+            zip_path = os.path.join(target_dir, folder_name + '.zip')
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for root, _, files in os.walk(folder_path):
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        zipf.write(file_path, os.path.relpath(file_path, source_dir))
