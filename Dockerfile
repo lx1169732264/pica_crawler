@@ -5,7 +5,7 @@ FROM python:3.8-slim
 WORKDIR /app
 
 # 设置环境变量
-ENV PICA_SECRET_KEY="~d}$Q7$eIni=V)9\\RK/P.RM4;9[7|@/CA}b~OW!3?EV`:<>M7pddUBL5n|0/*Cn" \
+ENV PICA_SECRET_KEY="" \
     PICA_ACCOUNT="" \
     PICA_PASSWORD="" \
     CATEGORIES="CG雜圖,生肉,耽美花園,偽娘哲學,扶他樂園,性轉換,SAO 刀劍神域,WEBTOON,Cosplay" \
