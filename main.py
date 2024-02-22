@@ -5,6 +5,7 @@ import sys
 import threading
 import traceback
 import shutil
+import requests
 
 from client import Pica
 from util import *
@@ -106,4 +107,4 @@ if os.environ.get("PACKAGE_TYPE", "False") == "True":
 
 # 发送消息通知
 if os.environ.get("BARK_URL"):
-    request.get(os.environ.get("BARK_URL"))
+    requests.get(os.environ.get("BARK_URL"))
