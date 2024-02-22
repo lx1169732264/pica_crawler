@@ -2,8 +2,8 @@ name: pica_crawler
 
 on:
   #将下面两行代码取消注释
-  #schedule:
-    #- cron: "0 0 * * *"
+  schedule:
+    - cron: "0 0 * * *"
   workflow_dispatch:
 
 jobs:
@@ -31,15 +31,19 @@ jobs:
           SUBSCRIBE_KEYWORD: ひぐま屋 (野良ヒグマ),アキレルショウジョ,オクモト悠太,ゐちぼっち,黒本君,もすきーと音
           # 订阅的x天范围     git actions运行时填小一点,免得漫画过多邮箱推送不了,本地运行时随便填
           SUBSCRIBE_DAYS: 7
+          # 允许在下载完成后发送自定义消息,为空则不发送 例: https://api.day.app/{your_keys}/picacg下载成功
+          BARK_URL: ${{secrets.BARK_URL}}
         run: |
           python main.py
           git add downloaded.txt
           git add run_time_history.txt
+      # comics文件夹下的所有漫画都会被打成一个压缩包,并上传到actions artifact. 如果不配置邮箱推送功能,可以用这个来下载到漫画
       - name: upload-artifact
         uses: actions/upload-artifact@v3.1.0
         with:
           name: pica-comics
           path: comics/
+          # 压缩包90天后会被清除
           retention-days: 90
       - name: send email
         env:
@@ -54,7 +58,7 @@ jobs:
           # 收信邮箱服务器的端口
           EMAIL_SERVER_PORT: 587
         run: |
-          # python sendEmail.py
+          python sendEmail.py
           echo '如果不需要邮件推送的功能,可以将上一行代码注释掉     首次运行时也建议注释,排行榜上的漫画都没推送过,邮箱接受不了大量的漫画,等首次运行结束后再开启'
       - name: commit & push
         uses: actions-go/push@master
