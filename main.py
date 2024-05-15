@@ -3,6 +3,7 @@ import io
 import json
 import sys
 import threading
+import time
 import traceback
 import shutil
 import requests
@@ -60,22 +61,27 @@ def download_comic(comic, only_latest):
     f = open('./downloaded.txt', 'ab')
     f.write((str(cid) + '\n').encode())
     f.close()
+    # 下载每本漫画的间隔时间
+    if os.environ.get("INTERVAL_TIME"):
+        time.sleep(int(os.environ.get("INTERVAL_TIME")))
 
 
+# 登录并打卡
 p = Pica()
 p.login()
 p.punch_in()
 
-# 排行榜/收藏夹的漫画
+# 排行榜的漫画
 comics = p.leaderboard()
 
-# # 关键词订阅的漫画
+# 关键词订阅的漫画
 keywords = os.environ.get("SUBSCRIBE_KEYWORD", "").split(',')
 for keyword in keywords:
     subscribe_comics = p.search_all(keyword)
     print('关键词%s : 订阅了%d本漫画' % (keyword, len(subscribe_comics)))
     comics += subscribe_comics
 
+# 收藏夹的漫画
 favourites = p.my_favourite()
 print('id | 本子 | 画师 | 分区')
 
@@ -84,6 +90,7 @@ for comic in favourites + comics:
         # 收藏夹:全量下载  其余:增量下载
         download_comic(comic, comic not in favourites)
         info = p.comic_info(comic['_id'])
+        # 收藏夹中的漫画被下载后,自动取消收藏,避免下次运行时重复下载
         if info["data"]['comic']['isFavourite']:
             p.favourite(comic["_id"])
     except:

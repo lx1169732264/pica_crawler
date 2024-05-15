@@ -14,7 +14,8 @@ ENV PICA_SECRET_KEY="" \
     SUBSCRIBE_DAYS="7" \
     REQUEST_PROXY="" \
     PACKAGE_TYPE="False" \
-    BARK_URL=""
+    BARK_URL="" \
+    INTERVAL_TIME="5"
 
 # 将当前目录内容复制到工作目录中
 COPY . /app

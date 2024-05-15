@@ -33,6 +33,8 @@ jobs:
           SUBSCRIBE_DAYS: 7
           # 允许在下载完成后发送自定义消息,为空则不发送 例: https://api.day.app/{your_keys}/picacg下载成功
           BARK_URL: ${{secrets.BARK_URL}}
+          #每下载一本漫画的间隔时间(秒),在下载大量漫画时可以设置的稍微大一些,免得哔咔服务器响应不过来
+          INTERVAL_TIME: 5
         run: |
           python main.py
           git add downloaded.txt
