@@ -50,15 +50,13 @@ class Pica:
     def login(self):
         url = base + "auth/sign-in"
         send = {"email": os.environ.get("PICA_ACCOUNT"), "password": os.environ.get("PICA_PASSWORD")}
-        __a = self.http_do("POST", url=url, json=send).text
-        print("----login response---------")
-        print(__a)
-        print("----login response---------")
-        if json.loads(__a)["code"] != 200:
+        response = self.http_do("POST", url=url, json=send).text
+        print("login response:{}".format(response), flush=True)
+        if json.loads(response)["code"] != 200:
             raise Exception('PICA_ACCOUNT/PICA_PASSWORD ERROR')
-        if 'token' not in __a:
+        if 'token' not in response:
             raise Exception('PICA_SECRET_KEY ERROR')
-        self.headers["authorization"] = json.loads(__a)["data"]["token"]
+        self.headers["authorization"] = json.loads(response)["data"]["token"]
 
     def comics(self, block="", tag="", order="", page=1):
         args = []
@@ -141,11 +139,19 @@ class Pica:
         url = f"{base}comics/{book_id}/favourite"
         return self.http_do("POST", url=url)
 
-    # 获取收藏夹
-    def my_favourite(self):
-        url = f"{base}users/favourite"
+    # 获取收藏夹-分页
+    def my_favourite(self, page=1):
+        url = f"{base}users/favourite?page={page}"
         res = self.http_do("GET", url=url)
-        return json.loads(res.content.decode())["data"]["comics"]["docs"]
+        return json.loads(res.content.decode())["data"]["comics"]
+
+    # 获取收藏夹-全部
+    def my_favourite_all(self):
+        comics = []
+        pages = self.my_favourite()["pages"]
+        for page in range(1, pages + 1):
+            comics += self.my_favourite(page)["docs"]
+        return comics
 
     # 打卡
     def punch_in(self):

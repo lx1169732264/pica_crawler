@@ -24,7 +24,7 @@ def download_comic(comic, only_latest):
     if only_latest:
         episodes = filter_comics(comic, episodes)
     if episodes:
-        print('%s | %s | %s | %s | %s:downloading---------------------' % (cid, title, author, categories,only_latest))
+        print('%s | %s | %s | %s | %s:downloading---------------------' % (cid, title, author, categories,only_latest), flush=True)
     else:
         return
 
@@ -56,7 +56,7 @@ def download_comic(comic, only_latest):
         for t in threads:
             t.join()
         last = pics.index(part[-1]) + 1
-        print("downloaded:%d,total:%d,progress:%s%%" % (last, len(pics), int(last / len(pics) * 100)))
+        print("downloaded:%d,total:%d,progress:%s%%" % (last, len(pics), int(last / len(pics) * 100)), flush=True)
     # 记录已下载过的id
     f = open('./downloaded.txt', 'ab')
     f.write((str(cid) + '\n').encode())
@@ -78,12 +78,12 @@ comics = p.leaderboard()
 keywords = os.environ.get("SUBSCRIBE_KEYWORD", "").split(',')
 for keyword in keywords:
     subscribe_comics = p.search_all(keyword)
-    print('关键词%s : 订阅了%d本漫画' % (keyword, len(subscribe_comics)))
+    print('关键词%s : 订阅了%d本漫画' % (keyword, len(subscribe_comics)), flush=True)
     comics += subscribe_comics
 
 # 收藏夹的漫画
-favourites = p.my_favourite()
-print('id | 本子 | 画师 | 分区')
+favourites = p.my_favourite_all()
+print('id | 本子 | 画师 | 分区', flush=True)
 
 for comic in favourites + comics:
     try:
@@ -94,7 +94,7 @@ for comic in favourites + comics:
         if info["data"]['comic']['isFavourite']:
             p.favourite(comic["_id"])
     except:
-        print('download failed,{},{},{}', comic['_id'], comic["title"], traceback.format_exc())
+        print('download failed,{},{},{}', comic['_id'], comic["title"], traceback.format_exc(), flush=True)
         continue
 
 # 记录上次运行时间

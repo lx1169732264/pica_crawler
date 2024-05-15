@@ -9,4 +9,4 @@ for i in range(len(dirs)):
     prefix = path + d + '/'
     for j in range(len(files) - 1, -1, -1):
         os.rename(prefix + files[j], prefix + str(j + 1).zfill(4) + '.jpg')
-    print(d + ':finished------------------------------------')
+    print(d + ':finished------------------------------------', flush=True)

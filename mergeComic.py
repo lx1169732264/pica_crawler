@@ -29,4 +29,4 @@ for i in range(len(dirs)):
         os.rename(source + p, path + target + '/' + str(index).zfill(4) + '.jpg')
         index += 1
     shutil.rmtree(source)
-    print('merge finished,' + d + ' removed------------------------------------')
+    print('merge finished,' + d + ' removed------------------------------------', flush=True)
