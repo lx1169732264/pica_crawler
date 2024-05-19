@@ -34,6 +34,7 @@ class Pica:
         header = self.headers.copy()
         ts = str(int(time()))
         raw = url.replace(base, "") + str(ts) + header["nonce"] + method + header["api-key"]
+        print('PICA_SECRET_KEY: ' + os.environ["PICA_SECRET_KEY"], flush=True)
         hc = hmac.new(os.environ["PICA_SECRET_KEY"].encode(), digestmod=hashlib.sha256)
         hc.update(raw.lower().encode())
         header["signature"] = hc.hexdigest()

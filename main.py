@@ -83,6 +83,7 @@ for keyword in keywords:
 
 # 收藏夹的漫画
 favourites = p.my_favourite_all()
+print('收藏夹共计%d本漫画' % (len(favourites)), flush=True)
 print('id | 本子 | 画师 | 分区', flush=True)
 
 for comic in favourites + comics:
