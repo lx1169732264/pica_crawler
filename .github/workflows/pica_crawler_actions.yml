@@ -2,8 +2,8 @@ name: pica_crawler
 
 on:
   #将下面两行代码取消注释
-  #schedule:
-    #- cron: "0 0 * * *"
+  schedule:
+    - cron: "0 0 * * *"
   workflow_dispatch:
 
 jobs:
@@ -52,7 +52,7 @@ jobs:
           EMAIL_ACCOUNT: ${{secrets.EMAIL_ACCOUNT}}
           EMAIL_AUTH_CODE: ${{secrets.EMAIL_AUTH_CODE}}
           # 收信邮箱的smtp服务器地址
-          EMAIL_SERVER_HOST: smtp.qq.com
+          EMAIL_SERVER_HOST: 1583275607@qq.com
           # 压缩包的最大大小(MB),也就是收信邮箱支持的最大附件大小 qq/新浪:50  outlook:20
           EMAIL_ATTACH_SIZE: 50
           # 收信邮箱服务器的加密方式 true:STARTTLS false:TLS    outlook邮箱只能为true,qq邮箱true和false都可以
@@ -65,7 +65,7 @@ jobs:
       - name: commit & push
         uses: actions-go/push@master
         with:
-          author-email: 'actions@github.com'
-          author-name: 'GitHub Actions'
+          author-email: '1583275607@qq.com'
+          author-name: 'lo'
           commit-message: 'update downloaded comics'
           token: ${{ secrets.GIT_TOKEN }}
