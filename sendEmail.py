@@ -13,14 +13,13 @@ if not os.path.exists("./zips"):
     os.mkdir('./zips')
 zip_file("./comics", "./zips")
 
-smtpObj = smtplib.SMTP(os.environ["EMAIL_SERVER_HOST"], os.environ["EMAIL_SERVER_PORT"])
-if os.environ["EMAIL_STARTTLS"] == 'true':
-    smtpObj.starttls()
-email_account = os.environ["EMAIL_ACCOUNT"]
-smtpObj.login(email_account, os.environ["EMAIL_AUTH_CODE"])
-
 zips = os.listdir('./zips')
 for i in range(len(os.listdir('./zips'))):
+    smtpObj = smtplib.SMTP(os.environ["EMAIL_SERVER_HOST"], os.environ["EMAIL_SERVER_PORT"])
+    if os.environ["EMAIL_STARTTLS"] == 'true':
+        smtpObj.starttls()
+    email_account = os.environ["EMAIL_ACCOUNT"]
+    smtpObj.login(email_account, os.environ["EMAIL_AUTH_CODE"])
     zipFile = zips[i]
     msg = MIMEMultipart()
     msg['From'] = Header(email_account)
@@ -33,4 +32,4 @@ for i in range(len(os.listdir('./zips'))):
     smtpObj.sendmail(email_account, email_account, msg.as_string())
     # 短时间频繁发邮件容易被邮件服务器检测到, 邮件越多则下封邮件的间隔时间越长
     time.sleep(i * 10)
-smtpObj.quit()
+    smtpObj.quit()

@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@main
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5.2.0
         with:
           python-version: "3.10"
       - name: install dependency
@@ -41,7 +41,7 @@ jobs:
           git add run_time_history.txt
       # comics文件夹下的所有漫画都会被打成一个压缩包,并上传到actions artifact. 如果不配置邮箱推送功能,可以用这个来下载到漫画
       - name: upload-artifact
-        uses: actions/upload-artifact@v3.1.0
+        uses: actions/upload-artifact@v4
         with:
           name: pica-comics
           path: comics/
