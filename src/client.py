@@ -6,6 +6,7 @@ from configparser import ConfigParser
 from datetime import datetime
 from time import time
 from urllib.parse import urlencode
+import logging
 
 import requests
 import urllib3
