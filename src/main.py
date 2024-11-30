@@ -10,6 +10,7 @@ import requests
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import logging
 from logging.handlers import TimedRotatingFileHandler
+from pathlib import Path
 
 from client import Pica
 from util import *
@@ -84,10 +85,12 @@ def download_comic(comic, db_path, only_latest):
                                f"[{convert_file_name(author)}]"
                                f"[{convert_file_name(categories)}]")
                             )
+    comic_path = ensure_valid_path(comic_path)
     for episode in episodes:
         chapter_title = convert_file_name(episode["title"])
         chapter_path  = os.path.join(comic_path, chapter_title)
-        os.makedirs(chapter_path, exist_ok=True)
+        chapter_path  = Path(chapter_path)
+        chapter_path.mkdir(parents=True, exist_ok=True)
 
         image_urls = []
         current_page = 1
@@ -125,7 +128,7 @@ def download_comic(comic, db_path, only_latest):
                         future.result()
                         downloaded_count += 1
                     except Exception as e:
-                        current_image = image_urls.index[image_url] + 1
+                        current_image = image_urls.index(image_url) + 1
                         episode_title = episode["title"]
                         logging.error(f"Error downloading the {current_image}-th image"
                                       f"in episode:{episode_title}"

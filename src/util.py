@@ -329,3 +329,10 @@ class InfoWarningFilter(logging.Filter):
     def filter(self, record):
         # 只允许 INFO 和 WARNING 级别的日志
         return record.levelno in [logging.INFO, logging.WARNING]
+
+max_path_length = 110  # bibu bibu bibu
+def ensure_valid_path(path):
+    if len(path) > (max_path_length):
+        print(f"Path too long, truncating: {path}")
+        path = path[:(max_path_length)]  # 截断路径
+    return path
