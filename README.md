@@ -13,8 +13,10 @@
 1. clone项目到本地
 2. 把pica_crawler_actions.yml的`env`中所有环境变量配置到本地
 3. 开启科学上网
+4. 参考`./config/config_backup.ini`构建个人配置文件`./config/config.ini`
 4. 运行`main.py`,下载好的漫画在`/comics`这个文件夹内
 5. git上提交downloaded.txt到远程仓库,避免重复下载
+
 
 # docker 运行
 
@@ -59,6 +61,8 @@ if os.environ.get("BARK_URL"):
 
 PICA_SECRET_KEY可以不用更改, 如果需要更改时, 注意是单引号内容
 
+新增了环境变量 `REQUEST_TIME_OUT`, 自定义限制每次请求最大时间；新增了环境变量 `DETAIL`, 下载阶段是否输出细节信息；新增了 `CHANGE_FAVOURITE`, 是否自动删除收藏夹；新增环境变量 `DELETE_COMIC`, 是否打包后删除漫画；
+
 docker部署建议将PACKAGE_TYPE打开, 同时挂载/app/output目录
 ```docker
 docker run --name picacg-download-container -d \
@@ -67,6 +71,10 @@ docker run --name picacg-download-container -d \
     -e REQUEST_PROXY="http代理(可选)" \
     -e BARK_URL="bark消息通知(可选)" \
     -e PACKAGE_TYPE="True" \
+    -e REQUEST_TIME_OUT="限制时间s: int(可选)"
+    -e DETAIL="False" \
+    -e CHANGE_FAVOURITE="True" \
+    -e DELETE_COMIC="False" \
     -e PICA_SECRET_KEY='~d}$Q7$eIni=V)9\RK/P.RM4;9[7|@/CA}b~OW!3?EV`:<>M7pddUBL5n|0/*Cn' \
     -v ./comics:/app/comics \
     -v ./output:/app/output \
@@ -131,11 +139,11 @@ docker run --name picacg-download-container -d \
 哔咔24小时排行榜内的所有漫画
 
 ## 收藏夹
-收藏夹内的所有漫画,下载完成后会自动取消收藏
+收藏夹内的所有漫画,下载完成是否取消收藏取决于环境变量`CHANGE_FAVOURITE`, if ="True":自动取消收藏; elif ="False":不取消收藏
 
 ## 关键词订阅
-`SUBSCRIBE_KEYWORD`里配置若干个关键词,下载范围等同于在哔咔app里用关键词搜索到的所有漫画   
-这个功能可能会下载过量的漫画,导致邮箱无法推送,可以调整`SUBSCRIBE_DAYS`缩小下载范围,或者是本地运行`main.py`   
+`./config/config.ini`里的`subscribe_keyword`里配置若干个关键词,下载范围等同于在哔咔app里用关键词搜索到的所有漫画   
+这个功能可能会下载过量的漫画,导致邮箱无法推送,可以调整`subscribe_days`缩小下载范围,或者是本地运行`main.py`   
 
 # 部分漫画不会被下载的原因
 排行榜/订阅的漫画会受到以下过滤逻辑的影响,**收藏夹则不会**(如果下载到本地后文件丢失了,可以通过放入收藏夹把它全量下载下来)
@@ -143,10 +151,9 @@ docker run --name picacg-download-container -d \
 
 ### 过滤重复下载
 
-downloaded.txt文件记录了已下载的漫画id, run_time_history.txt文件记录了每次运行的时间.   
+`./data/downloaded.db`文件记录了已扫描过的漫画id, 并记录了成功下载过的漫画章节名和基本信息.
 **排行榜上已下载过的漫画会触发增量下载,跳过曾下载过的章节**,其余所有情况都是全量下载所有章节.      
-每次运行代码后,都会通过git actions的指令提交代码,保存本次的运行结果.`GIT_TOKEN`配置错误将导致提交代码失败,这会导致漫画被重复下载和推送         
-
+每次运行代码后,都会通过git actions的指令提交代码,保存本次的运行结果.`GIT_TOKEN`配置错误将导致提交代码失败,这会导致漫画被重复下载和推送 
 
 
 ### 过滤分区
@@ -161,7 +168,11 @@ git actions配置文件的``CATEGORIES``配置项可以配置0~n个哔咔的分�
 
 
 ### 订阅的时间范围
-对于订阅的漫画,如果 当天 - 订阅漫画的上传日 > `SUBSCRIBE_DAYS`,这本漫画将不再被下载
+对于订阅的漫画,如果 当天 - 订阅漫画的上传日 > `subscribe_days`,这本漫画将不再被下载
+
+
+### 日志文件
+在文件夹`logs`下存储有运行日志文件，所有日志按天自动划分，自动删除超过`backup_count`天的日志。错误信息单独保存到`ERROR_*.log`中。
 
 
 # 结尾
@@ -184,8 +195,3 @@ git actions配置文件的``CATEGORIES``配置项可以配置0~n个哔咔的分�
 | 2022/12/08 | 启动项目时自动打卡                                                                                                                                                |
 | 2022/11/27 | 实现按排行榜以及收藏夹进行下载的功能                                                                                                                                       |
 
-
-# 个人更新
-* 添加config.ini保存一些个人的灵活设置
-* 添加更多的env变量，在docker运行时生效
-* 添加数据库./data/downloaded.db, 存储下载的comics的信息

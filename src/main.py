@@ -183,7 +183,7 @@ print('已下载共计%d本漫画' % get_downloaded_comic_count(db_path), flush=
 print('收藏夹共计%d本漫画' % (len(favourited_comics)), flush=True)
 isChangeFavo = os.environ.get("CHANGE_FAVOURITE", False) == "True"
 
-for comic in (ranked_comics + favourited_comics + searched_comics)[:1]:
+for comic in (ranked_comics + favourited_comics + searched_comics):
     try:
         # 收藏夹:全量下载  其余:增量下载
         download_comic(comic, db_path, comic not in favourited_comics)
