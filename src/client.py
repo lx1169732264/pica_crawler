@@ -30,7 +30,7 @@ class Pica:
         parser = ConfigParser()
         parser.read('./config/config.ini', encoding='utf-8')
         self.headers = dict(parser.items('header'))
-        self.timeout = int(os.environ.get("REQUEST_TIME_OUT"))
+        self.timeout = int(os.environ.get("REQUEST_TIME_OUT", 10))
 
     def http_do(self, method, url, **kwargs):
         kwargs.setdefault("allow_redirects", True)
@@ -105,6 +105,10 @@ class Pica:
     def episodes_all(self, book_id, title: str) -> list:
         try:
             first_page_data = self.episodes(book_id, current_page=1).json()
+            if 'data' not in first_page_data:
+                logging.info(f'Chapter information missing, this comic may have been deleted, {title}, {book_id}')
+                return []
+
             # 'total' represents the total number of chapters in the comic, 
             # while 'pages' indicates the number of pages needed to paginate the chapter data.
             total_pages    = first_page_data["data"]["eps"]["pages"]

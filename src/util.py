@@ -23,7 +23,12 @@ def convert_file_name(name: str) -> str:
 def get_cfg(section: str, key: str):
     parser = ConfigParser()
     parser.read('./config/config.ini', encoding='utf-8')
-    return dict(parser.items(section))[key]
+    config_value = dict(parser.items(section))[key]
+    if config_value:
+        return config_value
+    #如果是用git actions方式部署,部分敏感信息不适合填进config.ini文件并上传至代码仓库,此时可以从从环境变量取值作为兜底
+    #ConfigParser读写配置项是按小写来的,但linux环境变量又是大小写敏感的.这里把入参key做了大写转换
+    return os.environ[key.upper()]
 
 
 def get_latest_run_time():
@@ -151,6 +156,10 @@ def init_db(db_path='./downloaded.db'):
     """
     初始化数据库，创建表格用于存储已下载的漫画 ID。
     """
+    #创建数据库文件的父目录
+    dir_path = os.path.dirname(db_path)
+    os.makedirs(dir_path, exist_ok=True)
+
     conn = sqlite3.connect(db_path)  # 连接到 SQLite 数据库，如果文件不存在，会自动创建
     cursor = conn.cursor()  # 获取一个游标对象
     
