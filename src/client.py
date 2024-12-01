@@ -6,9 +6,11 @@ from configparser import ConfigParser
 from datetime import datetime
 from time import time
 from urllib.parse import urlencode
+import logging
 
 import requests
 import urllib3
+from util import get_cfg
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -17,24 +19,24 @@ base = "https://picaapi.picacomic.com/"
 
 class Pica:
     Order_Default = "ua"  # 默认
-    Order_Latest = "dd"  # 新到旧
-    Order_Oldest = "da"  # 旧到新
-    Order_Loved = "ld"  # 最多爱心
-    Order_Point = "vd"  # 最多指名
+    Order_Latest  = "dd"  # 新到旧
+    Order_Oldest  = "da"  # 旧到新
+    Order_Loved   = "ld"  # 最多爱心
+    Order_Point   = "vd"  # 最多指名
 
     def __init__(self) -> None:
         self.__s = requests.session()
         self.__s.verify = False
         parser = ConfigParser()
-        parser.read('./config.ini', encoding='utf-8')
+        parser.read('./config/config.ini', encoding='utf-8')
         self.headers = dict(parser.items('header'))
+        self.timeout = int(os.environ.get("REQUEST_TIME_OUT"))
 
     def http_do(self, method, url, **kwargs):
         kwargs.setdefault("allow_redirects", True)
         header = self.headers.copy()
         ts = str(int(time()))
         raw = url.replace(base, "") + str(ts) + header["nonce"] + method + header["api-key"]
-        print('PICA_SECRET_KEY: ' + os.environ["PICA_SECRET_KEY"], flush=True)
         hc = hmac.new(os.environ["PICA_SECRET_KEY"].encode(), digestmod=hashlib.sha256)
         hc.update(raw.lower().encode())
         header["signature"] = hc.hexdigest()
@@ -45,12 +47,18 @@ class Pica:
             proxies = {'http': proxy, 'https': proxy}
         else:
             proxies = None
-        response = self.__s.request(method=method, url=url, verify=False, proxies=proxies, **kwargs)
+        response = self.__s.request(
+            method=method, url=url, verify=False, 
+            proxies=proxies, timeout=self.timeout, **kwargs
+        )
         return response
 
     def login(self):
         url = base + "auth/sign-in"
-        send = {"email": os.environ.get("PICA_ACCOUNT"), "password": os.environ.get("PICA_PASSWORD")}
+        send = {
+            "email": get_cfg('param', 'pica_account'), 
+            "password": get_cfg('param', 'pica_password')
+        }
         response = self.http_do("POST", url=url, json=send).text
         print("login response:{}".format(response), flush=True)
         if json.loads(response)["code"] != 200:
@@ -89,23 +97,33 @@ class Pica:
         return json.loads(res.content.decode())
 
     # 获取本子的章节 一页最大40条
-    def episodes(self, book_id, page=1):
-        url = f"{base}comics/{book_id}/eps?page={page}"
+    def episodes(self, book_id, current_page):
+        url = f"{base}comics/{book_id}/eps?page={current_page}"
         return self.http_do("GET", url=url)
 
     # 获取本子的全部章节
-    def episodes_all(self, book_id) -> list:
-        first_page = self.episodes(book_id).json()
-        pages = first_page["data"]["eps"]["pages"]
-        total = first_page["data"]["eps"]["total"]
-        episodes = list(first_page["data"]["eps"]["docs"])
-        while pages > 1:
-            episodes.extend(list(self.episodes(book_id, pages).json()["data"]["eps"]["docs"]))
-            pages -= 1
-        episodes = sorted(episodes, key=lambda x: x['order'])
-        if len(episodes) != total:
-            raise Exception('wrong number of episodes,expect:' + total + ',actual:' + len(episodes))
-        return episodes
+    def episodes_all(self, book_id, title: str) -> list:
+        try:
+            first_page_data = self.episodes(book_id, current_page=1).json()
+            # 'total' represents the total number of chapters in the comic, 
+            # while 'pages' indicates the number of pages needed to paginate the chapter data.
+            total_pages    = first_page_data["data"]["eps"]["pages"]
+            total_episodes = first_page_data["data"]["eps"]["total"]
+            episode_list  = list(first_page_data["data"]["eps"]["docs"])
+            while total_pages > 1:
+                additional_episodes = self.episodes(book_id, total_pages).json()["data"]["eps"]["docs"]
+                episode_list.extend(list(additional_episodes))
+                total_pages -= 1
+            episode_list = sorted(episode_list, key=lambda x: x['order'])
+            if len(episode_list) != total_episodes:
+                raise Exception('wrong number of episodes,expect:' + 
+                    total_episodes + ',actual:' + len(episode_list)
+                )
+        except KeyError as e:
+            logging.error(f"Comic {title} has been MISSING. KeyError: {e}")
+        except Exception as e:
+            logging.error(f"An error occurred while fetching episodes for comic {title}. Error: {e}")
+        return episode_list
 
     # 根据章节获取图片
     def picture(self, book_id, ep_id, page=1):
@@ -118,18 +136,30 @@ class Pica:
         return json.loads(res.content.decode("utf-8"))["data"]["comics"]
 
     def search_all(self, keyword):
-        comics = []
+        subscribed_comics = []
         if keyword:
-            pages = self.search(keyword)["pages"]
-            for page in range(1, pages + 1):
-                docs = self.search(keyword, page)["docs"]
-                res = [i for i in docs if
-                       (datetime.now() - datetime.strptime(i["updated_at"], "%Y-%m-%dT%H:%M:%S.%fZ")).days <= int(
-                           os.environ["SUBSCRIBE_DAYS"])]
-                comics += res
-                if len(docs) != len(res):
+            total_pages_num = self.search(keyword)["pages"]
+            for current_page in range(1, total_pages_num + 1):
+                page_docs = self.search(keyword, current_page)["docs"]
+
+                # Filter comics based on subscription date
+                recent_comics = [comic for comic in page_docs if
+                    (
+                        (
+                            datetime.now() - 
+                            datetime.strptime(comic["updated_at"], "%Y-%m-%dT%H:%M:%S.%fZ")
+                        ).days
+                    ) <= int(get_cfg('param', 'subscribe_days'))]
+                subscribed_comics += recent_comics
+
+                # Check if any comics in the current page exceed the subscribe time limit.
+                # If there are any comics that do not meet the time criteria, it is assumed
+                # that subsequent pages will also contain outdated comics, so the search
+                # is stopped early to save unnecessary requests.
+                if len(page_docs) != len(recent_comics):
                     break
-        return comics
+
+        return subscribed_comics
 
     def categories(self):
         url = f"{base}categories"

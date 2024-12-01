@@ -4,18 +4,19 @@ services:
     image: yuanzhangzcc/picacg-download:latest
     container_name: picacg-download-container
     volumes:
-      - ./comics:/app/comics
+      - ./comics/bika:/app/comics
       - ./output:/app/output
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./config:/app/config
     environment:
       - PICA_SECRET_KEY=~d}$$Q7$$eIni=V)9\RK/P.RM4;9[7|@/CA}b~OW!3?EV`:<>M7pddUBL5n|0/*Cn #$字符存在转义问题,将密钥里的$替换为$$
-      - PICA_ACCOUNT=用户名
-      - PICA_PASSWORD=密码
-      - CATEGORIES=CG雜圖,生肉,耽美花園,偽娘哲學,扶他樂園,性轉換,SAO 刀劍神域,WEBTOON,Cosplay
-      - CATEGORIES_RULE=EXCLUDE
-      - SUBSCRIBE_KEYWORD= #订阅关键字
-      - SUBSCRIBE_DAYS=7
-      - REQUEST_PROXY= #下载图片代理
-      - PACKAGE_TYPE=False #是否打包为zip, 推荐True
-      - BARK_URL= #下载完成消息通知
-      - INTERVAL_TIME=5 #每下载一本漫画的间隔时间(秒)
+      - REQUEST_PROXY=                #下载图片代理
+      - PACKAGE_TYPE=True             #是否打包为zip, 推荐True
+      - INTERVAL_TIME=5               #每下载一本漫画的间隔时间(秒)
+      - REQUEST_TIME_OUT=10           #URL请求时间限制
+      - DETAIL=False                  #是否打印详细信息
+      - CHANGE_FAVOURITE=False        #是否删除收藏夹内容
+      - DELETE_COMIC=False            #是否打包后删除漫画
+      - BARK_URL=                     #下载完成消息通知
     restart: unless-stopped
