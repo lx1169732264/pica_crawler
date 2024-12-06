@@ -63,7 +63,7 @@ def download_comic(comic, db_path, only_latest):
     categories = comic["categories"]
     episodes   = pica_server.episodes_all(cid, title)
     is_detail  = os.environ.get("DETAIL", "False") == "True"
-    num_pages  = comic["pagesCount"]
+    num_pages  = comic["pagesCount"] if "pagesCount" in comic else -1
     # 增量更新
     if only_latest:
         episodes = filter_comics(comic, episodes, db_path)
