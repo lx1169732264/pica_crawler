@@ -23,23 +23,12 @@ jobs:
           PICA_SECRET_KEY: ${{secrets.PICA_SECRET_KEY}}
           PICA_ACCOUNT: ${{secrets.PICA_ACCOUNT}}
           PICA_PASSWORD: ${{secrets.PICA_PASSWORD}}
-          # 过滤分区 用,分隔
-          CATEGORIES: CG雜圖,生肉,耽美花園,偽娘哲學,扶他樂園,性轉換,SAO 刀劍神域,WEBTOON,Cosplay
-          # CATEGORIES_RULE 过滤规则    INCLUDE: 包含任意一个分区就下载  EXCLUDE: 包含任意一个分区就不下载
-          CATEGORIES_RULE: EXCLUDE
-          # 订阅的关键词,会下载x天范围内上传的漫画    为空则关闭关键词订阅 用,分隔
-          SUBSCRIBE_KEYWORD: ひぐま屋 (野良ヒグマ),アキレルショウジョ,オクモト悠太,ゐちぼっち,黒本君,もすきーと音
-          # 订阅的x天范围     git actions运行时填小一点,免得漫画过多邮箱推送不了,本地运行时随便填
-          SUBSCRIBE_DAYS: 7
           # 允许在下载完成后发送自定义消息,为空则不发送 例: https://api.day.app/{your_keys}/picacg下载成功
           BARK_URL: ${{secrets.BARK_URL}}
-          #每下载一本漫画的间隔时间(秒),在下载大量漫画时可以设置的稍微大一些,免得哔咔服务器响应不过来
-          INTERVAL_TIME: 5
-          #下载阶段是否输出细节信息
-          DETAIL: True
         run: |
           python ./src/main.py
           git add ./data/downloaded.db
+          git add ./logs
       # comics文件夹下的所有漫画都会被打成一个压缩包,并上传到actions artifact. 如果不配置邮箱推送功能,可以用这个来下载到漫画
       - name: upload-artifact
         uses: actions/upload-artifact@v4

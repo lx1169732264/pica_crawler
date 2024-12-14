@@ -1,6 +1,7 @@
 import operator
 import os
 import random
+import shutil
 import zipfile
 from configparser import ConfigParser
 from datetime import datetime
@@ -13,22 +14,33 @@ import requests
 def convert_file_name(name: str) -> str:
     if isinstance(name, list):
         name = "&".join(map(str, name))
-    # windows的文件夹不能带特殊字符,需要处理下文件夹名
+    # 处理文件夹名中的特殊字符
     for i, j in ("/／", "\\＼", "?？", "|︱", "\"＂", "*＊", "<＜", ">＞", ":-"):
         name = name.replace(i, j)
     name = name.replace(" ", "")
+    # 操作系统对文件夹名最大长度有限制,这里对超长部分进行截断,避免file name too long报错
+    # linux是255字节,windows更大一些
+    name = truncate_string_by_bytes(name, 255)
     return name
 
-
-def get_cfg(section: str, key: str):
-    parser = ConfigParser()
-    parser.read('./config/config.ini', encoding='utf-8')
-    config_value = dict(parser.items(section))[key]
+# 该方法的配置读取优先级为 环境变量 > config.ini > default_value默认值
+# docker方式部署时, 只需配置环境变量, 无需重新构建镜像
+# GitHub Actions方式部署时, 部分敏感信息不适合填进config.ini文件并上传至代码仓库, 也请配置进环境变量中
+def get_cfg(section: str, key: str, default_value = ''):
+    # 项目中用到的环境变量名统一是大写的, 这里对入参key做了大写转换
+    config_value = os.environ.get(key.upper())
     if config_value:
         return config_value
-    #如果是用git actions方式部署,部分敏感信息不适合填进config.ini文件并上传至代码仓库,此时可以从从环境变量取值作为兜底
-    #ConfigParser读写配置项是按小写来的,但linux环境变量又是大小写敏感的.这里把入参key做了大写转换
-    return os.environ[key.upper()]
+
+    # 因为ConfigParser限制变量名是小写的, 在读取config.ini的配置,对入参key做了小写转换
+    parser = ConfigParser()
+    parser.read('./config/config.ini', encoding='utf-8')
+    config_value = dict(parser.items(section))[key.lower()]
+    if config_value:
+        return config_value
+
+    # 最后取默认值作为兜底
+    return default_value
 
 
 def get_latest_run_time():
@@ -44,11 +56,11 @@ def get_latest_run_time():
 def filter_comics(comic, episodes, db_path) -> list:
     # 已下载过的漫画,执行增量更新
     if is_comic_downloaded(comic["_id"], db_path):
-        episodes = [episode for episode in episodes 
+        episodes = [episode for episode in episodes
             if not is_episode_downloaded(comic["_id"], episode["title"], db_path)]
     # 过滤掉指定分区的本子
-    categories_rule = get_cfg('param', 'categories_rule')
-    categories = get_cfg('param', 'categories').split(',')
+    categories_rule = get_cfg('filter', 'categories_rule')
+    categories = get_cfg('filter', 'categories').split(',')
     # 漫画的分区和用户自定义分区的交集
     intersection = set(comic['categories']).intersection(set(categories))
     if categories:
@@ -345,3 +357,87 @@ def ensure_valid_path(path):
         print(f"Path too long, truncating: {path}")
         path = path[:(max_path_length)]  # 截断路径
     return path
+
+def truncate_string_by_bytes(s, max_bytes):
+    """
+    截断字符串，使其字节长度不超过max_bytes。
+
+    参数:
+    s (str): 要截断的字符串。
+    max_bytes (int): 字符串的最大字节长度。
+
+    返回:
+    str: 截断后的字符串。
+    """
+    # 将字符串编码为字节串（默认使用utf-8编码）
+    encoded_str = s.encode('utf-8')
+
+    # 检查字节串的长度
+    if len(encoded_str) > max_bytes:
+        # 截断字节串
+        truncated_bytes = encoded_str[:max_bytes]
+
+        # 确保截断后的字节串是一个有效的UTF-8编码（可能需要移除最后一个字节以形成完整的字符）
+        # 这通过解码然后重新编码来实现，可能会丢失最后一个字符的一部分
+        truncated_str = truncated_bytes.decode('utf-8', 'ignore').encode('utf-8')
+
+        # 返回截断后的字符串（以字节形式编码然后解码回字符串）
+        return truncated_str.decode('utf-8')
+    else:
+        # 如果不需要截断，则返回原始字符串
+        return s
+
+def merge_episodes(dir):
+    """
+    将漫画从各个章节子文件夹中提取出来, 合并到同一目录, 方便连续阅读
+    合并前的目录结构: ./comics/漫画标题/章节名/图片
+    合并后的目录结构: ./comics/漫画标题/图片
+
+    参数:
+    dir (str): 漫画所在文件夹
+    """
+
+    # 获取目标目录下的所有子文件夹(章节信息),按章节名排序
+    subdirs = sorted([d for d in os.listdir(dir) if os.path.isdir(os.path.join(dir, d))])
+
+    # 存储每个子文件夹中的文件数量
+    counts = []
+
+    # 存储所有文件的完整路径，以便后续处理
+    all_files = []
+
+    # 遍历子文件夹，计算文件数量并收集文件路径
+    for subdir in subdirs:
+        subdir_path = os.path.join(dir, subdir)
+        count = len([f for f in os.listdir(subdir_path) if os.path.isfile(os.path.join(subdir_path, f))])
+        counts.append(count)
+
+        # 获取章节下的所有图片,按图片名排序
+        pics = os.listdir(subdir_path)
+        pics.sort(key=lambda x: str(x.split('.')[0]))
+        for filename in pics:
+            if os.path.isfile(os.path.join(subdir_path, filename)):
+                all_files.append((os.path.join(subdir_path, filename), subdir, count))
+
+    # 确定最大文件数量，用于确定文件名填充宽度
+    max_count = sum(counts) if counts else 0
+    width = len(str(max_count))
+    # 初始化全局文件计数器
+    global_counter = 1
+
+    # 遍历所有文件，复制并重命名
+    for src_file, subdir, count in all_files:
+        # 生成新的文件名，使用宽度进行零填充
+        new_filename = f"{global_counter:0{width}d}{os.path.splitext(src_file)[1]}"
+
+        # 复制文件到目标目录（这里直接复制到dir）
+        shutil.copy2(src_file, os.path.join(dir, new_filename))
+
+        # 更新全局计数器
+        global_counter += 1
+
+    # 删除各个章节的文件夹
+    for subdir in subdirs:
+        shutil.rmtree(os.path.join(dir,subdir))
+
+    print(f"{dir}合并章节完成，共处理了 {global_counter - 1} 个文件")

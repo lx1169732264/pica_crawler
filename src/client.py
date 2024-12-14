@@ -30,19 +30,19 @@ class Pica:
         parser = ConfigParser()
         parser.read('./config/config.ini', encoding='utf-8')
         self.headers = dict(parser.items('header'))
-        self.timeout = int(os.environ.get("REQUEST_TIME_OUT", 10))
+        self.timeout = int(get_cfg("crawl", "request_time_out", 10))
 
     def http_do(self, method, url, **kwargs):
         kwargs.setdefault("allow_redirects", True)
         header = self.headers.copy()
         ts = str(int(time()))
         raw = url.replace(base, "") + str(ts) + header["nonce"] + method + header["api-key"]
-        hc = hmac.new(os.environ["PICA_SECRET_KEY"].encode(), digestmod=hashlib.sha256)
+        hc = hmac.new(get_cfg("param", "pica_secret_key").encode(), digestmod=hashlib.sha256)
         hc.update(raw.lower().encode())
         header["signature"] = hc.hexdigest()
         header["time"] = ts
         kwargs.setdefault("headers", header)
-        proxy = os.environ.get("REQUEST_PROXY")
+        proxy = get_cfg("param", "request_proxy")
         if proxy:
             proxies = {'http': proxy, 'https': proxy}
         else:
@@ -153,7 +153,7 @@ class Pica:
                             datetime.now() - 
                             datetime.strptime(comic["updated_at"], "%Y-%m-%dT%H:%M:%S.%fZ")
                         ).days
-                    ) <= int(get_cfg('param', 'subscribe_days'))]
+                    ) <= int(get_cfg('filter', 'subscribe_days'))]
                 subscribed_comics += recent_comics
 
                 # Check if any comics in the current page exceed the subscribe time limit.
