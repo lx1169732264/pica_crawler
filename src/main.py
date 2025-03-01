@@ -46,7 +46,8 @@ error_log_handler.setFormatter(log_formatter)
 
 logging.basicConfig(
     level=logging.INFO,
-    handlers=[log_handler, error_log_handler]
+    handlers=[log_handler, error_log_handler],
+    encoding='utf-8'
 )
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf8')

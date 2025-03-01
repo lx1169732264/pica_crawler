@@ -35,7 +35,7 @@ for i in range(total):
             author = comic["author"]
             episodes = pica_server.episodes_all(cid, title)
             if episodes:
-                mark_comic_as_downloaded(cid, title)
+                mark_comic_as_downloaded(cid, db_path)
                 for episode in episodes:
                     update_downloaded_episodes(cid, episode["title"], db_path)
                 update_comic_data(comic, db_path)
