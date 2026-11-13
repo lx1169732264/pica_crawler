@@ -108,9 +108,10 @@ jobs:
           # 收信邮箱服务器的端口
           EMAIL_SERVER_PORT: 587
         run: |
-          # 只需要 7z 的 zip 分卷功能, 不需要 p7zip-rar;
-          # 新版 ubuntu 已移除 p7zip-full, 改用 7zip 包作为兜底
-          sudo apt-get install -y p7zip-full || sudo apt-get install -y 7zip
+          # 只需要 7z 的 zip 分卷功能, 不需要 p7zip-rar
+          # hosted runner 镜像自带 7zip(提供 7z 命令), 先探测: 只有真的缺失时才走 apt,
+          # 避免每次运行都吃 apt 冷启动 / 等 unattended-upgrades 释放 dpkg 锁的几十秒
+          command -v 7z >/dev/null 2>&1 || sudo apt-get install -y 7zip
           python ./src/sendEmail.py
       #提交并上传下载记录到仓库
       - name: commit & push
